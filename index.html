@@ -252,6 +252,30 @@
     border-radius: 4px;
     border: 1px solid var(--rule);
   }
+  .char-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.1rem;
+    align-items: center;
+  }
+  .char-leg-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-mute);
+  }
+  .char-swatch {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    box-shadow: 0 0 6px currentColor;
+  }
+  .char-leg-count {
+    color: var(--ink-faint);
+    margin-left: 0.1rem;
+  }
 
   /* ============ STAGE ============ */
   .stage {
@@ -653,9 +677,9 @@
 <body>
 
 <header class="masthead">
-  <div class="eyebrow">Substance · An atlas of the 118</div>
-  <h1>The periodic table,<br><em>by what it costs.</em></h1>
-  <p class="dek">Every known element, read through five dimensions at once: how rare it is, what it sells for, what harm it carries, who controls its supply, and whether it's <em>in the device you're holding right now</em>. Switch lenses to read the same atoms differently.</p>
+  <div class="eyebrow">Substance · 118 elements</div>
+  <h1>The periodic table, <em>annotated.</em></h1>
+  <p class="dek">Each element carries four statistics — its abundance in the crust, its market price, a toxicity rating, and its top-producing country. Click a cell to read all four at once, or use the lenses to color the table by one.</p>
 </header>
 
 <nav class="lenses" id="lenses">
@@ -663,6 +687,7 @@
   <button class="lens" data-lens="plane" style="--lens-color: var(--steel)"><span class="num">02</span>The Rarity Plane</button>
   <button class="lens" data-lens="phone" style="--lens-color: var(--sage)"><span class="num">03</span>In Your Phone</button>
   <button class="lens" data-lens="supply" style="--lens-color: var(--rust)"><span class="num">04</span>Supply Concentration</button>
+  <button class="lens" data-lens="character" style="--lens-color: var(--plum)"><span class="num">05</span>Use &amp; Harm</button>
   <div class="lens-search-wrap" id="searchWrap">
     <input class="lens-search" id="search" type="text" placeholder="Search · try edible, magnetic, in your phone" autocomplete="off" spellcheck="false">
     <span class="search-count" id="searchCount"></span>
@@ -1228,6 +1253,12 @@ const HUE = {
   plum:  [138,90,154]
 };
 
+/* Hand-classified character per element: v=valuable, d=dangerous, b=both, n=neutral */
+const CHARACTER = {'H':'v','He':'v','Li':'v','Be':'b','B':'v','C':'v','N':'v','O':'v','F':'b','Ne':'v','Na':'v','Mg':'v','Al':'v','Si':'v','P':'v','S':'v','Cl':'b','Ar':'v','K':'v','Ca':'v','Sc':'v','Ti':'v','V':'v','Cr':'v','Mn':'v','Fe':'v','Co':'v','Ni':'v','Cu':'v','Zn':'v','Ga':'v','Ge':'v','As':'d','Se':'v','Br':'n','Kr':'v','Rb':'n','Sr':'n','Y':'v','Zr':'v','Nb':'v','Mo':'v','Tc':'b','Ru':'v','Rh':'v','Pd':'v','Ag':'v','Cd':'d','In':'v','Sn':'v','Sb':'d','Te':'v','I':'v','Xe':'v','Cs':'b','Ba':'n','La':'v','Ce':'v','Pr':'v','Nd':'v','Pm':'d','Sm':'v','Eu':'v','Gd':'v','Tb':'v','Dy':'v','Ho':'v','Er':'v','Tm':'v','Yb':'v','Lu':'v','Hf':'v','Ta':'v','W':'v','Re':'v','Os':'v','Ir':'v','Pt':'v','Au':'v','Hg':'b','Tl':'d','Pb':'d','Bi':'v','Po':'d','At':'d','Rn':'d','Fr':'d','Ra':'d','Ac':'d','Th':'b','Pa':'d','U':'b','Np':'d','Pu':'b','Am':'b','Cm':'d','Bk':'d','Cf':'d','Es':'d','Fm':'d','Md':'d','No':'d','Lr':'d','Rf':'d','Db':'d','Sg':'d','Bh':'d','Hs':'d','Mt':'d','Ds':'d','Rg':'d','Cn':'d','Nh':'d','Fl':'d','Mc':'d','Lv':'d','Ts':'d','Og':'d'};
+
+const CHAR_LABELS = { v: 'Valuable', d: 'Dangerous', b: 'Use & Peril', n: 'Common' };
+const CHAR_HUES   = { v: HUE.sage, d: HUE.rust, b: HUE.amber, n: [120,114,104] };
+
 /* ============ METRIC DEFINITIONS ============ */
 const METRICS = {
   price: {
@@ -1311,6 +1342,12 @@ function fillForCell(el, lens) {
     if (v == null) return { hue: null, opacity: 0, hueName: 'rust' };
     const t = linScale(v, 20, 95);
     return { hue: HUE.rust, opacity: 0.10 + 0.55 * t, hueName: 'rust' };
+  }
+  if (lens === 'character') {
+    const c = CHARACTER[el.sym];
+    if (!c || c === 'n') return { hue: HUE.steel, opacity: 0.06, hueName: 'steel' };
+    const hue = CHAR_HUES[c];
+    return { hue, opacity: 0.40, hueName: 'character' };
   }
   return { hue: null, opacity: 0, hueName: 'amber' };
 }
@@ -1559,6 +1596,21 @@ function renderControls() {
       <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--ink-faint);letter-spacing:0.1em;">
         Synthetic and uncommercialized elements omitted · color encodes role
       </span>
+    `;
+  } else if (state.lens === 'character') {
+    const counts = { v:0, d:0, b:0, n:0 };
+    E.forEach(el => { const k = CHARACTER[el.sym] || 'n'; counts[k]++; });
+    c.innerHTML = `
+      <span class="control-label">Hand-classified by use and harm</span>
+      <div class="char-legend">
+        ${Object.entries(CHAR_LABELS).map(([k, label]) => {
+          const [r,g,b] = CHAR_HUES[k];
+          return `<span class="char-leg-item">
+            <span class="char-swatch" style="background: rgb(${r},${g},${b})"></span>
+            ${label} <span class="char-leg-count">· ${counts[k]}</span>
+          </span>`;
+        }).join('')}
+      </div>
     `;
   }
 }
