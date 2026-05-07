@@ -142,6 +142,57 @@
     font-weight: 400;
   }
   .lens.active .num { color: var(--lens-color, var(--amber)); }
+  .lens-search-wrap {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.6rem 0.4rem 0.85rem;
+    border-left: 1px solid var(--rule);
+  }
+  .lens-search-wrap::before {
+    content: '⌕';
+    color: var(--ink-faint);
+    font-size: 1rem;
+    line-height: 1;
+  }
+  .lens-search {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--ink);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    width: 16rem;
+    padding: 0.3rem 0;
+    caret-color: var(--amber);
+  }
+  .lens-search::placeholder {
+    color: var(--ink-faint);
+    letter-spacing: 0.06em;
+    font-size: 0.66rem;
+    font-style: italic;
+  }
+  .search-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    white-space: nowrap;
+    min-width: 4rem;
+  }
+  .lens-search-wrap.has-query {
+    border-bottom: 1px solid var(--amber);
+  }
+  .cell.search-hide { opacity: 0.08; }
+  .plane-dot.search-hide { opacity: 0.08; }
+  .plane-label.search-hide { opacity: 0.1; }
+  @media (max-width: 700px) {
+    .lens-search-wrap { width: 100%; border-left: none; border-top: 1px solid var(--rule); margin-left: 0; padding: 0.5rem 1rem; }
+    .lens-search { width: 100%; }
+  }
 
   /* ============ LENS CONTROLS ============ */
   .lens-controls {
@@ -612,6 +663,10 @@
   <button class="lens" data-lens="plane" style="--lens-color: var(--steel)"><span class="num">02</span>The Rarity Plane</button>
   <button class="lens" data-lens="phone" style="--lens-color: var(--sage)"><span class="num">03</span>In Your Phone</button>
   <button class="lens" data-lens="supply" style="--lens-color: var(--rust)"><span class="num">04</span>Supply Concentration</button>
+  <div class="lens-search-wrap" id="searchWrap">
+    <input class="lens-search" id="search" type="text" placeholder="Search · try edible, magnetic, in your phone" autocomplete="off" spellcheck="false">
+    <span class="search-count" id="searchCount"></span>
+  </div>
 </nav>
 
 <div class="lens-controls" id="lensControls"></div>
@@ -901,10 +956,202 @@ const E = ELEMENTS.map(a => ({
 const state = {
   lens: 'heatmap',
   metric: 'price',
-  selected: null
+  selected: null,
+  query: ''
 };
 
 const $ = id => document.getElementById(id);
+
+/* ============ SEARCH ============ */
+/* Tag dictionary: query phrases → matching element symbols.
+   Single source of truth for category-style queries. */
+const TAG_DEFS = {
+  edible: { syn: ['edible','eat','food','nutrient','dietary','mineral supplement','vitamin','essential nutrient'],
+    syms: ['H','C','N','O','Na','Mg','P','S','Cl','K','Ca','Cr','Mn','Fe','Co','Cu','Zn','Se','Mo','I','F'] },
+  body: { syn: ['body','human body','biological','biology','physiology','in you','in us','in humans'],
+    syms: ['H','C','N','O','Na','Mg','P','S','Cl','K','Ca','Cr','Mn','Fe','Co','Cu','Zn','Se','Mo','I','F'] },
+  blood: { syn: ['blood','bloodstream','hemoglobin'],
+    syms: ['Fe','K','Na','Ca','Mg','Cu','Zn','O','H'] },
+  bone: { syn: ['bone','skeleton','teeth','dental','tooth'],
+    syms: ['Ca','P','Mg','F'] },
+  brain: { syn: ['brain','neural','nervous system','neuron'],
+    syms: ['P','K','Na','Ca','Mg','Fe','Zn','I'] },
+  radioactive: { syn: ['radioactive','radiation','unstable','fissile','nuclear bomb','atomic bomb'],
+    syms: ['Tc','Pm','Po','At','Rn','Fr','Ra','Ac','Th','Pa','U','Np','Pu','Am','Cm','Bk','Cf','Es','Fm','Md','No','Lr','Rf','Db','Sg','Bh','Hs','Mt','Ds','Rg','Cn','Nh','Fl','Mc','Lv','Ts','Og'] },
+  toxic: { syn: ['toxic','poison','poisonous','deadly','lethal','venomous','harmful','heavy metal'],
+    syms: ['As','Cd','Hg','Pb','Tl','Be','Po','U','Pu','Sb','Ba','Cr'] },
+  magnetic: { syn: ['magnet','magnetic','magnets','ferromagnetic'],
+    syms: ['Fe','Co','Ni','Gd','Nd','Sm','Pr','Dy','Tb','B'] },
+  noble: { syn: ['noble gas','noble','inert gas','inert'],
+    syms: ['He','Ne','Ar','Kr','Xe','Rn','Og'] },
+  alkali: { syn: ['alkali metal','alkali'],
+    syms: ['Li','Na','K','Rb','Cs','Fr'] },
+  alkaline: { syn: ['alkaline earth','alkaline-earth'],
+    syms: ['Be','Mg','Ca','Sr','Ba','Ra'] },
+  halogen: { syn: ['halogen'],
+    syms: ['F','Cl','Br','I','At','Ts'] },
+  metalloid: { syn: ['metalloid','semimetal','semi-metal'],
+    syms: ['B','Si','Ge','As','Sb','Te','Po'] },
+  transition: { syn: ['transition metal','transition'],
+    syms: ['Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Y','Zr','Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg'] },
+  rareearth: { syn: ['rare earth','rare-earth','ree'],
+    syms: ['Sc','Y','La','Ce','Pr','Nd','Pm','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb','Lu'] },
+  lanthanide: { syn: ['lanthanide'],
+    syms: ['La','Ce','Pr','Nd','Pm','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb','Lu'] },
+  actinide: { syn: ['actinide'],
+    syms: ['Ac','Th','Pa','U','Np','Pu','Am','Cm','Bk','Cf','Es','Fm','Md','No','Lr'] },
+  liquid: { syn: ['liquid at room','liquid'],
+    syms: ['Hg','Br'] },
+  gas: { syn: ['gases','gaseous','gas at room'],
+    syms: ['H','He','N','O','F','Ne','Cl','Ar','Kr','Xe','Rn'] },
+  phone: { syn: ['phone','smartphone','iphone','android','cell phone','mobile phone'],
+    fromField: 'inPhone' },
+  car: { syn: ['car','auto','automotive','vehicle','automobile','ev','electric vehicle'],
+    syms: ['Li','Co','Ni','Mn','Fe','Al','Cu','Mg','Pt','Pd','Rh','Pb','Nd','Dy','La','Ce','C','Si','Sn'] },
+  battery: { syn: ['battery','batteries','lithium-ion','li-ion'],
+    syms: ['Li','Co','Ni','Mn','Al','Cu','C','Pb','Cd','Zn','Fe','V','P'] },
+  glass: { syn: ['glass','windowpane'],
+    syms: ['Si','B','O','Na','K','Ca','Pb','La','Ce'] },
+  led: { syn: ['led','leds','light emitting diode'],
+    syms: ['Ga','As','In','P','N','Y','Eu','Tb','Ce'] },
+  jewelry: { syn: ['jewelry','jewellery','jewel','ring','wedding band','engagement'],
+    syms: ['Au','Ag','Pt','Pd','Cu','Ti','C'] },
+  solar: { syn: ['solar','photovoltaic','solar panel','solar cell'],
+    syms: ['Si','Cd','Te','Cu','In','Ga','Se'] },
+  reactor: { syn: ['reactor','nuclear reactor','fission','fuel rod','enrichment'],
+    syms: ['U','Pu','Th','Cs','I','Co','Tc','Hf','Zr'] },
+  medicine: { syn: ['medicine','medical','drug','mri','pet scan','chemo','chemotherapy','medical imaging','contrast agent'],
+    syms: ['Tc','I','Gd','Ba','Cs','Co','F','Pt','Lu','Re','Ho','Y'] },
+  paint: { syn: ['paint','pigment','pigments','dye'],
+    syms: ['Ti','Pb','Cd','Cr','Co','Fe','Cu','Hg','Zn'] },
+  fertilizer: { syn: ['fertilizer','fertiliser','agriculture','crops','soil'],
+    syms: ['N','P','K','S','Ca','Mg','Mo','B'] },
+  semi: { syn: ['semiconductor','chip','cpu','processor','transistor','microchip'],
+    syms: ['Si','Ge','Ga','As','In','P','Sb','B','Hf'] },
+  reactswater: { syn: ['explodes in water','reacts with water','explode','explodes','exploding','explosive','reacts'],
+    syms: ['Li','Na','K','Rb','Cs','Fr','Ca','Sr','Ba'] },
+  precious: { syn: ['precious metal','precious','expensive'],
+    syms: ['Au','Ag','Pt','Pd','Rh','Ir','Os','Ru','Re'] },
+  conflict: { syn: ['conflict mineral','conflict','blood mineral','3tg','blood diamond'],
+    fromField: 'conflict' },
+  glow: { syn: ['glow','glows','phosphorescent','luminescent'],
+    syms: ['P','Ra','Ac','Pm','Po','Eu','Tb'] },
+  conductive: { syn: ['most conductive','best conductor','conductive','conductor'],
+    syms: ['Ag','Cu','Au','Al'] },
+  super: { syn: ['superconductor','superconducting'],
+    syms: ['Nb','Ti','Sn','Y','La','Cu','Ba','Bi'] },
+  dense: { syn: ['densest','heaviest','heaviest naturally','heaviest stable','dense'],
+    syms: ['Os','Ir','Pt','Re','W','U'] },
+  starformed: { syn: ['big bang','stars','stellar','primordial','cosmic'],
+    syms: ['H','He','Li'] },
+  synthetic: { syn: ['synthetic','man-made','manmade','lab made','manufactured'],
+    syms: ['Tc','Pm','Np','Pu','Am','Cm','Bk','Cf','Es','Fm','Md','No','Lr','Rf','Db','Sg','Bh','Hs','Mt','Ds','Rg','Cn','Nh','Fl','Mc','Lv','Ts','Og'] }
+};
+
+function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+/* Precomputed flat list of (tag, syn, regex), sorted longest-first.
+   Built lazily on first search. */
+let _synList = null;
+function buildSynList() {
+  _synList = [];
+  for (const [tagKey, def] of Object.entries(TAG_DEFS)) {
+    for (const syn of def.syn) {
+      _synList.push({
+        tag: tagKey, syn,
+        len: syn.length,
+        re: new RegExp('\\b' + escapeRegex(syn) + '(?:es|s)?\\b', 'gi')
+      });
+    }
+  }
+  _synList.sort((a, b) => b.len - a.len);
+}
+
+/* Returns Set of atomic numbers matching the query */
+function searchResults(q) {
+  q = (q || '').trim().toLowerCase();
+  if (!q) return null;  // null = no filter
+
+  // 1. Atomic number
+  if (/^\d+$/.test(q)) {
+    const n = parseInt(q, 10);
+    return new Set(E.filter(e => e.z === n).map(e => e.z));
+  }
+
+  // 2. Exact symbol (case-insensitive)
+  if (q.length <= 2) {
+    const m = E.filter(e => e.sym.toLowerCase() === q);
+    if (m.length) return new Set(m.map(e => e.z));
+  }
+
+  // 3. Exact name match
+  let m = E.filter(e => e.name.toLowerCase() === q);
+  if (m.length) return new Set(m.map(e => e.z));
+
+  // 4. Tag/category match — greedy longest-first to prevent
+  //    "noble gases" from also firing the bare "gas" tag.
+  if (!_synList) buildSynList();
+  let working = ' ' + q + ' ';
+  const tagged = new Set();
+  for (const s of _synList) {
+    if (s.re.test(working)) {
+      working = working.replace(s.re, m => ' '.repeat(m.length));
+      const def = TAG_DEFS[s.tag];
+      if (def.fromField) {
+        E.forEach(el => { if (el[def.fromField]) tagged.add(el.z); });
+      } else {
+        def.syms.forEach(sym => {
+          const el = E.find(e => e.sym === sym);
+          if (el) tagged.add(el.z);
+        });
+      }
+    }
+  }
+  if (tagged.size) return tagged;
+
+  // 5. Name prefix / substring
+  m = E.filter(e => e.name.toLowerCase().startsWith(q));
+  if (!m.length) m = E.filter(e => e.name.toLowerCase().includes(q));
+  if (m.length) return new Set(m.map(e => e.z));
+
+  // 6. Full-text in note + phoneRole
+  m = E.filter(e =>
+    (e.note || '').toLowerCase().includes(q) ||
+    (e.phoneRole || '').toLowerCase().includes(q)
+  );
+  return new Set(m.map(e => e.z));
+}
+
+function applySearch() {
+  const q = state.query;
+  const wrap = $('searchWrap');
+  if (wrap) wrap.classList.toggle('has-query', !!q.trim());
+
+  const results = searchResults(q);
+  const inSet = z => results === null ? true : results.has(z);
+
+  document.querySelectorAll('.cell:not(.ln-marker)').forEach(cell => {
+    cell.classList.toggle('search-hide', !inSet(+cell.dataset.z));
+  });
+  document.querySelectorAll('.plane-dot').forEach(dot => {
+    dot.classList.toggle('search-hide', !inSet(+dot.dataset.z));
+  });
+  document.querySelectorAll('.plane-label').forEach(lbl => {
+    lbl.classList.toggle('search-hide', !inSet(+lbl.dataset.z));
+  });
+
+  // Update results badge
+  const count = $('searchCount');
+  if (count) {
+    if (results === null) {
+      count.textContent = '';
+    } else if (results.size === 0) {
+      count.textContent = 'no matches';
+    } else {
+      count.textContent = results.size + ' match' + (results.size === 1 ? '' : 'es');
+    }
+  }
+}
 
 /* ============ COLOR SCALES ============ */
 function logScale(value, min, max) {
@@ -1410,10 +1657,47 @@ document.querySelectorAll('.lens').forEach(b => {
   b.addEventListener('click', () => setLens(b.dataset.lens));
 });
 
+/* ============ SEARCH WIRING ============ */
+const searchInput = $('search');
+searchInput.addEventListener('input', e => {
+  state.query = e.target.value;
+  applySearch();
+});
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    searchInput.value = '';
+    state.query = '';
+    applySearch();
+    searchInput.blur();
+  } else if (e.key === 'Enter') {
+    const results = searchResults(state.query);
+    if (results && results.size === 1) {
+      selectElement([...results][0]);
+    } else if (results && results.size > 1) {
+      // Prefer exact symbol/name match if user happens to type one
+      const q = state.query.trim().toLowerCase();
+      const exact = E.find(el => el.sym.toLowerCase() === q || el.name.toLowerCase() === q);
+      if (exact && results.has(exact.z)) selectElement(exact.z);
+    }
+  }
+});
+// "/" or Cmd/Ctrl-K focuses search
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    searchInput.focus();
+    searchInput.select();
+  } else if (e.key === '/' && document.activeElement !== searchInput && !e.metaKey && !e.ctrlKey) {
+    e.preventDefault();
+    searchInput.focus();
+  }
+});
+
 /* ============ INIT ============ */
 renderTable();
 renderControls();
 applyLens();
+applySearch();
 
 // pre-select carbon for a non-empty default state
 selectElement(6);
