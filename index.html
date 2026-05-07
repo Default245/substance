@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0">
+<title>Substance — An Atlas of the 118</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200;0,6..72,300;0,6..72,400;0,6..72,600;1,6..72,200;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0908;
+    --bg-elev: #15130f;
+    --bg-tile: #1a1714;
+    --ink: #f0ead8;
+    --ink-mute: #8a8378;
+    --ink-faint: #4a4540;
+    --rule: #2a2520;
+    --rule-soft: #1f1b17;
+
+    /* Lens accents */
+    --amber: #d4a04c;
+    --steel: #6a92b8;
+    --rust:  #b34a3a;
+    --sage:  #7a9266;
+    --plum:  #8a5a9a;
+
+    --shadow-tile: 0 1px 0 rgba(255,235,180,0.04) inset, 0 0 0 1px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Newsreader', Georgia, serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background:
+      radial-gradient(ellipse 80% 50% at 80% 0%, rgba(212,160,76,0.045), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 10% 100%, rgba(106,146,184,0.04), transparent 55%),
+      var(--bg);
+    padding-bottom: 4rem;
+  }
+
+  /* ============ MASTHEAD ============ */
+  .masthead {
+    padding: 3rem 1.5rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+  }
+  .masthead::before {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 0;
+    width: 80px; height: 1px;
+    background: var(--amber);
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+    max-width: 140px;
+  }
+  h1 {
+    font-family: 'Newsreader', serif;
+    font-weight: 200;
+    font-size: clamp(2rem, 6.5vw, 4.25rem);
+    line-height: 1;
+    letter-spacing: -0.025em;
+    font-variation-settings: "opsz" 72;
+    color: var(--ink);
+  }
+  h1 em {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--amber);
+  }
+  .dek {
+    margin-top: 1.5rem;
+    color: var(--ink-mute);
+    font-size: 1.05rem;
+    line-height: 1.55;
+    max-width: 42rem;
+    font-weight: 300;
+  }
+  .dek em {
+    color: var(--ink);
+    font-style: italic;
+  }
+
+  /* ============ LENS NAV ============ */
+  .lenses {
+    max-width: 1200px;
+    margin: 1.75rem auto 0;
+    padding: 0 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .lens {
+    background: transparent;
+    border: none;
+    color: var(--ink-mute);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.9rem 1.1rem;
+    cursor: pointer;
+    border-bottom: 1px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s ease, border-color 0.15s ease;
+    font-weight: 500;
+    position: relative;
+  }
+  .lens:hover { color: var(--ink); }
+  .lens.active {
+    color: var(--ink);
+    border-bottom-color: var(--lens-color, var(--amber));
+  }
+  .lens .num {
+    display: inline-block;
+    color: var(--ink-faint);
+    margin-right: 0.5rem;
+    font-weight: 400;
+  }
+  .lens.active .num { color: var(--lens-color, var(--amber)); }
+
+  /* ============ LENS CONTROLS ============ */
+  .lens-controls {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+    border-bottom: 1px solid var(--rule);
+    min-height: 3rem;
+  }
+  .control-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .metric-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .metric {
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink-mute);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.4rem 0.8rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s ease;
+    font-weight: 500;
+  }
+  .metric:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .metric.active {
+    color: var(--bg);
+    background: var(--metric-color, var(--amber));
+    border-color: var(--metric-color, var(--amber));
+  }
+  .scale-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+  }
+  .scale-grad {
+    width: 120px; height: 8px;
+    border-radius: 4px;
+    border: 1px solid var(--rule);
+  }
+
+  /* ============ STAGE ============ */
+  .stage {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 0.5rem;
+    position: relative;
+    min-height: 540px;
+  }
+  .stage-view { display: none; }
+  .stage-view.active { display: block; }
+
+  /* ============ PERIODIC GRID ============ */
+  .periodic, .lanth-actinides {
+    display: grid;
+    grid-template-columns: repeat(18, minmax(40px, 1fr));
+    gap: 3px;
+    min-width: 760px;
+    max-width: 1140px;
+    margin: 0 auto;
+  }
+  .lanth-actinides { margin-top: 0.85rem; }
+
+  .grid-wrap {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+  }
+  .grid-wrap::-webkit-scrollbar { height: 6px; }
+  .grid-wrap::-webkit-scrollbar-track { background: transparent; }
+  .grid-wrap::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 3px; }
+
+  .cell {
+    aspect-ratio: 1 / 1.12;
+    background: var(--bg-tile);
+    border: 1px solid var(--rule-soft);
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    border-radius: 2px;
+    transition: transform 0.12s ease, border-color 0.12s ease;
+    box-shadow: var(--shadow-tile);
+  }
+  .cell::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--cell-fill, transparent);
+    opacity: var(--cell-opacity, 0);
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+  }
+  .cell::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1.5px;
+    background: var(--cell-edge, transparent);
+    opacity: var(--cell-edge-op, 0);
+    transition: opacity 0.2s ease;
+  }
+  .cell:hover {
+    transform: translateY(-2px);
+    border-color: var(--cell-edge, var(--ink-faint));
+    z-index: 2;
+  }
+  .cell:hover::before { opacity: calc(var(--cell-opacity, 0) + 0.15); }
+  .cell.active {
+    border-color: var(--cell-edge, var(--ink));
+    box-shadow: 0 0 0 1px var(--cell-edge, var(--ink)), var(--shadow-tile);
+  }
+  .cell.dim { opacity: 0.18; }
+  .cell.no-data {
+    --cell-fill: transparent !important;
+    --cell-opacity: 0 !important;
+  }
+  .cell.no-data .num, .cell.no-data .sym, .cell.no-data .name {
+    color: var(--ink-faint);
+  }
+
+  .num {
+    position: absolute;
+    top: 3px; left: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(0.52rem, 1.3vw, 0.62rem);
+    color: var(--ink-mute);
+    font-weight: 400;
+    z-index: 1;
+  }
+  .sym {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Newsreader', serif;
+    font-weight: 400;
+    font-size: clamp(0.95rem, 2.4vw, 1.25rem);
+    font-variation-settings: "opsz" 36;
+    color: var(--ink);
+    z-index: 1;
+    letter-spacing: -0.02em;
+  }
+  .name {
+    position: absolute;
+    bottom: 3px; left: 0; right: 0;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
+    font-size: clamp(0.42rem, 0.95vw, 0.5rem);
+    letter-spacing: 0.05em;
+    color: var(--ink-mute);
+    z-index: 1;
+    padding: 0 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .badge {
+    position: absolute;
+    top: 3px; right: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem;
+    color: var(--ink);
+    z-index: 2;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    opacity: 0.7;
+  }
+  .badge.flag {
+    color: var(--rust);
+    font-weight: 700;
+  }
+
+  .ln-marker {
+    background: transparent;
+    border: 1px dashed var(--rule);
+    cursor: default;
+    box-shadow: none;
+  }
+  .ln-marker:hover { transform: none; border-color: var(--rule); }
+  .ln-marker .sym {
+    color: var(--ink-faint);
+    font-size: 0.7rem;
+    font-style: italic;
+  }
+
+  /* ============ PLANE (scatter) ============ */
+  .plane-wrap {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    max-width: 1100px;
+    margin: 0 auto;
+    background:
+      linear-gradient(to right, transparent 0, transparent calc(100% - 1px), var(--rule-soft) calc(100% - 1px)),
+      linear-gradient(to bottom, transparent 0, transparent calc(100% - 1px), var(--rule-soft) calc(100% - 1px));
+    background-size: 10% 100%, 100% 10%;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .plane-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .plane-axis {
+    fill: var(--ink-faint);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+  .plane-axis-title {
+    fill: var(--ink-mute);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .plane-grid {
+    stroke: var(--rule-soft);
+    stroke-width: 1;
+    stroke-dasharray: 2 3;
+  }
+  .plane-dot {
+    cursor: pointer;
+    transition: r 0.15s ease, opacity 0.15s ease;
+  }
+  .plane-dot:hover { r: 6; }
+  .plane-dot.active { stroke: var(--ink); stroke-width: 1.5; }
+  .plane-label {
+    fill: var(--ink-mute);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    pointer-events: none;
+    letter-spacing: 0.02em;
+  }
+  .plane-label.major { fill: var(--ink); font-weight: 700; }
+  .plane-quadrant-label {
+    fill: var(--ink-faint);
+    font-family: 'Newsreader', serif;
+    font-size: 11px;
+    font-style: italic;
+    pointer-events: none;
+    letter-spacing: 0.02em;
+  }
+
+  /* ============ DETAIL ============ */
+  .detail {
+    max-width: 1200px;
+    margin: 1.5rem auto 0;
+    padding: 1.75rem 1.5rem;
+    border-top: 1px solid var(--rule);
+    position: relative;
+  }
+  .detail::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 1.5rem;
+    width: 40px; height: 1px;
+    background: var(--detail-color, var(--amber));
+  }
+  .detail-empty {
+    text-align: center;
+    color: var(--ink-faint);
+    font-style: italic;
+    font-family: 'Newsreader', serif;
+    font-size: 1rem;
+    padding: 1.5rem 0;
+    font-weight: 300;
+  }
+  .detail-card {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 1.75rem;
+    align-items: start;
+  }
+  .detail-tile {
+    width: 110px; height: 124px;
+    border-radius: 3px;
+    position: relative;
+    background: var(--bg-tile);
+    border: 1px solid var(--detail-color, var(--ink-faint));
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .detail-tile::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: var(--detail-color);
+    opacity: 0.2;
+  }
+  .detail-tile .num { font-size: 0.78rem; top: 5px; left: 6px; }
+  .detail-tile .sym { font-size: 2.5rem; font-weight: 300; }
+  .detail-tile .name {
+    bottom: 6px;
+    font-size: 0.55rem;
+    letter-spacing: 0.06em;
+  }
+  .detail-tile .mass {
+    position: absolute;
+    top: 5px; right: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--ink-mute);
+  }
+
+  .detail-info { min-width: 0; }
+  .detail-name {
+    font-family: 'Newsreader', serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    line-height: 1.05;
+    margin-bottom: 0.15rem;
+    font-variation-settings: "opsz" 60;
+  }
+  .detail-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 1rem;
+  }
+  .detail-meta span { color: var(--detail-color, var(--amber)); }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding: 0.75rem 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .stat-value {
+    font-family: 'Newsreader', serif;
+    font-size: 1.05rem;
+    color: var(--ink);
+    font-weight: 400;
+    font-variation-settings: "opsz" 24;
+    line-height: 1.1;
+  }
+  .stat-value.muted { color: var(--ink-mute); font-style: italic; font-weight: 300; }
+  .stat-unit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--ink-mute);
+    font-weight: 400;
+  }
+  .toxbar {
+    display: flex; gap: 2px; margin-top: 2px;
+  }
+  .toxbar span {
+    flex: 1; height: 4px; background: var(--rule);
+    border-radius: 1px;
+  }
+  .toxbar span.on { background: var(--rust); }
+
+  .detail-note {
+    color: var(--ink);
+    font-size: 1.05rem;
+    line-height: 1.6;
+    font-weight: 300;
+    margin-bottom: 0.75rem;
+  }
+  .detail-note::first-letter {
+    font-size: 1.3em;
+    font-style: italic;
+    color: var(--detail-color, var(--ink));
+  }
+  .detail-tags {
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+    margin-top: 0.5rem;
+  }
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.55rem;
+    border-radius: 2px;
+    border: 1px solid var(--rule);
+    color: var(--ink-mute);
+  }
+  .tag.warn { color: var(--rust); border-color: var(--rust); }
+  .tag.phone { color: var(--steel); border-color: var(--steel); }
+  .tag.precious { color: var(--amber); border-color: var(--amber); }
+
+  /* ============ FOOTER ============ */
+  footer {
+    max-width: 1200px;
+    margin: 3rem auto 0;
+    padding: 2rem 1.5rem;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-faint);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    line-height: 1.8;
+  }
+  footer p { margin-bottom: 0.4rem; }
+  footer em {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    color: var(--ink-mute);
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 700px) {
+    .masthead { padding: 2rem 1rem 1.5rem; }
+    .lenses { padding: 0 0.5rem; }
+    .lens { padding: 0.7rem 0.7rem; font-size: 0.62rem; letter-spacing: 0.08em; }
+    .lens-controls { padding: 0.85rem 1rem; gap: 0.5rem 1rem; }
+    .stage { padding: 1rem 0.5rem 0.5rem; }
+    .detail { padding: 1.25rem 1rem; }
+    .detail-card { grid-template-columns: 1fr; gap: 1rem; }
+    .detail-tile { width: 92px; height: 104px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="eyebrow">Substance · An atlas of the 118</div>
+  <h1>The periodic table,<br><em>by what it costs.</em></h1>
+  <p class="dek">Every known element, read through five dimensions at once: how rare it is, what it sells for, what harm it carries, who controls its supply, and whether it's <em>in the device you're holding right now</em>. Switch lenses to read the same atoms differently.</p>
+</header>
+
+<nav class="lenses" id="lenses">
+  <button class="lens active" data-lens="heatmap" style="--lens-color: var(--amber)"><span class="num">01</span>Heatmap</button>
+  <button class="lens" data-lens="plane" style="--lens-color: var(--steel)"><span class="num">02</span>The Rarity Plane</button>
+  <button class="lens" data-lens="phone" style="--lens-color: var(--sage)"><span class="num">03</span>In Your Phone</button>
+  <button class="lens" data-lens="supply" style="--lens-color: var(--rust)"><span class="num">04</span>Supply Concentration</button>
+</nav>
+
+<div class="lens-controls" id="lensControls"></div>
+
+<main class="stage" id="stage">
+  <div class="stage-view active" id="view-table">
+    <div class="grid-wrap">
+      <div class="periodic" id="periodic"></div>
+      <div class="lanth-actinides" id="lanthActinides"></div>
+    </div>
+  </div>
+  <div class="stage-view" id="view-plane">
+    <div class="plane-wrap">
+      <svg class="plane-svg" id="planeSvg" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </div>
+</main>
+
+<aside class="detail" id="detail">
+  <div class="detail-empty">Select an element to read its dossier.</div>
+</aside>
+
+<footer>
+  <p>Prices indicative · late 2024 · USD per kilogram unless noted</p>
+  <p>Abundances: continental crust, parts per million</p>
+  <p>Supply concentration: top single-country share of global mine production · USGS / industry reports</p>
+  <p>Conflict mineral flag: 3TG (Tin · Tantalum · Tungsten · Gold) plus Cobalt</p>
+  <p><em>"Money is a kind of poetry." — Wallace Stevens</em></p>
+</footer>
+
+<script>
+/* ============ DATA ============
+   Each element: [z, sym, name, row, col, mass, price$/kg|null, abundance ppm|null,
+                  toxicity 0-5, top producer, top share %|null, inPhone, phoneRole|null,
+                  conflict bool, note]
+   row 9-10 = lanthanides/actinides (placed below)
+*/
+const ELEMENTS = [
+  [1,'H','Hydrogen',1,1, 1.008, 2, 1400, 0,'global',null,true,'Battery electrolyte trace; future fuel cells', false,
+   'The lightest element and the universe\'s most common atom. Burned for energy, bonded to almost everything alive.'],
+  [2,'He','Helium',1,18, 4.003, 30, 0.008, 0,'USA',55,false,null, false,
+   'Cools MRI magnets and rocket engines. Non-renewable on Earth — once vented, it leaves the atmosphere for good.'],
+  [3,'Li','Lithium',2,1, 6.94, 80, 20, 1,'Australia',50,true,'Battery cathode and anode chemistry', false,
+   'The metal of mobility. Every laptop, phone, and EV battery runs on lithium-ion intercalation.'],
+  [4,'Be','Beryllium',2,2, 9.012, 850, 2.8, 4,'USA',70,false,null, false,
+   'Stiff, light, and prized for aerospace and X-ray windows. Its dust scars lungs permanently — chronic beryllium disease.'],
+  [5,'B','Boron',2,13, 10.81, 5, 10, 1,'Turkey',40,true,'Strengthening agent in display glass (Gorilla)', false,
+   'Hardens glass, feeds crops, and sits inside the most powerful rare-earth magnets.'],
+  [6,'C','Carbon',2,14, 12.01, 0.5, 200, 0,'China',65,true,'Battery anode (graphite); conductive additives', false,
+   'The backbone of every living thing. Diamond, graphite, graphene, you. Carbon is the chemistry of complexity itself.'],
+  [7,'N','Nitrogen',2,15, 14.01, 0.15, 19, 0,'global',null,true,'Inert atmosphere in chip fabrication', false,
+   '78% of every breath. The Haber-Bosch process pulls nitrogen from air and feeds half the planet.'],
+  [8,'O','Oxygen',2,16, 16.00, 0.15, 461000, 0,'global',null,true,'Display glass (SiO2); ITO touchscreen', false,
+   'Every breath, every fire, every rusted hull. Civilization runs on it.'],
+  [9,'F','Fluorine',2,17, 19.00, 2.5, 585, 3,'China',60,true,'Battery electrolyte (LiPF6); etching gases', false,
+   'Strengthens teeth and Teflon. Pure fluorine eats glass, flesh, and almost anything else.'],
+  [10,'Ne','Neon',1,18, 20.18, 240, 0.000005, 0,'Ukraine',50,false,null, false,
+   'The original glow of city signs. Lithography lasers for advanced chips depend on it — Ukraine\'s war disrupted supply.'],
+  [11,'Na','Sodium',3,1, 22.99, 3, 23600, 0,'global',null,true,'Strengthened cover glass (Na+ ion exchange)', false,
+   'Salt of the earth. Runs your nerves, preserves food, and lights orange streetlamps.'],
+  [12,'Mg','Magnesium',3,2, 24.31, 5, 23300, 0,'China',87,true,'Lightweight frame and case alloy', false,
+   'The lightest structural metal. Phone frames, brilliant flares, and a mineral your heart needs.'],
+  [13,'Al','Aluminum',3,13, 26.98, 2.50, 82300, 0,'China',55,true,'Phone unibody chassis; battery foils', false,
+   'The most abundant metal in the crust. Cans, planes, foil — and most premium phone bodies.'],
+  [14,'Si','Silicon',3,14, 28.09, 3, 282000, 0,'China',70,true,'Logic and memory chip substrate', false,
+   'The Valley is named for it. Every chip, every solar cell, most of the glass under your finger.'],
+  [15,'P','Phosphorus',3,15, 30.97, 3, 1050, 2,'China',45,true,'LiFePO4 battery cathode; dopant for chips', false,
+   'In your DNA and your fertilizer. White phosphorus is a weapon; matchheads are red phosphorus.'],
+  [16,'S','Sulfur',3,16, 32.07, 0.10, 350, 1,'global',null,true,'Vulcanized rubber gaskets; battery additives', false,
+   'Vulcanizes rubber, makes sulfuric acid, and lurks inside every protein.'],
+  [17,'Cl','Chlorine',3,17, 35.45, 0.20, 145, 3,'global',null,true,'PVC cable insulation', false,
+   'Disinfects pools and drinking water. Deployed as a chemical weapon in Ypres, 1915.'],
+  [18,'Ar','Argon',3,18, 39.95, 0.50, 3.5, 0,'global',null,false,null, false,
+   'Inert shield gas for welders, the protector of old documents, and the working fluid in many sensors.'],
+  [19,'K','Potassium',4,1, 39.10, 12, 20900, 1,'Canada',32,true,'Strengthened cover glass (K+ ion exchange)', false,
+   'Bananas, fertilizer, and the spark that runs your nervous system. Pure metal ignites in water.'],
+  [20,'Ca','Calcium',4,2, 40.08, 8, 41500, 0,'global',null,false,null, false,
+   'Bones, teeth, cement, chalk. The architecture of life and cities both.'],
+  [21,'Sc','Scandium',4,3, 44.96, 4000, 22, 1,'China',60,false,null, false,
+   'Ultralight aluminum-scandium alloys for fighter jets and bicycle frames. Production is tiny.'],
+  [22,'Ti','Titanium',4,4, 47.87, 35, 5650, 0,'China',30,true,'Premium phone frame; surgical pin material', false,
+   'Strong, light, biocompatible. Implants, jets, white paint, and the iPhone Pro chassis.'],
+  [23,'V','Vanadium',4,5, 50.94, 25, 120, 2,'China',62,false,null, false,
+   'Toughens steel. Vanadium-redox flow batteries are a leading candidate for grid storage.'],
+  [24,'Cr','Chromium',4,6, 52.00, 9, 102, 3,'South Africa',44,true,'Stainless steel hardware; decorative plating', false,
+   'The shine of stainless and chrome. Hexavalent chromium is a known carcinogen.'],
+  [25,'Mn','Manganese',4,7, 54.94, 2, 950, 2,'South Africa',36,true,'NCM and NMC battery cathodes', false,
+   'Hardens steel, powers next-gen batteries, and helps your bones. China refines most of the world\'s supply.'],
+  [26,'Fe','Iron',4,8, 55.85, 0.10, 56300, 0,'Australia',38,true,'Magnet alloys; structural screws', false,
+   'The Iron Age never ended. Skyscrapers, cars, hemoglobin. Your blood is iron-red for a reason.'],
+  [27,'Co','Cobalt',4,9, 58.93, 30, 25, 3,'DR Congo',70,true,'Lithium-cobalt-oxide battery cathode', true,
+   'Battery cathodes and jet engine superalloys. 70% comes from the DRC, much of it from artisanal mines using child labor.'],
+  [28,'Ni','Nickel',4,10, 58.69, 18, 84, 2,'Indonesia',50,true,'High-energy NCA and NMC battery cathodes', false,
+   'Stainless steel and EV batteries. Indonesia\'s share has surged as nickel-rich cathodes replace cobalt.'],
+  [29,'Cu','Copper',4,11, 63.55, 9, 60, 1,'Chile',24,true,'Wiring, traces, antenna, charging coil', false,
+   'The nervous system of civilization. Every wire, every grid, every motor winding — and the antenna in your hand.'],
+  [30,'Zn','Zinc',4,12, 65.38, 3, 70, 1,'China',33,true,'Solder additive; corrosion coating', false,
+   'Galvanizes steel against rust. Your immune system needs it. Lozenges actually work.'],
+  [31,'Ga','Gallium',4,13, 69.72, 700, 19, 2,'China',95,true,'5G RF amplifiers (GaAs, GaN); LEDs', false,
+   'Melts in your hand. China controls 95% of refining and restricts exports — a silent supply chokehold on 5G chips.'],
+  [32,'Ge','Germanium',4,14, 72.63, 1700, 1.6, 1,'China',60,true,'Camera infrared lenses; fiber-optic cores', false,
+   'Fiber optic cores and night-vision lenses. Subject to Chinese export controls since 2023.'],
+  [33,'As','Arsenic',4,15, 74.92, 2, 1.8, 5,'China',50,true,'GaAs RF chip substrate', false,
+   'Classic poison. Contaminates groundwater for tens of millions across Bangladesh and West Bengal.'],
+  [34,'Se','Selenium',4,16, 78.97, 70, 0.05, 3,'Japan',25,false,null, false,
+   'Photocopiers, thin-film solar, and a trace nutrient for thyroid health. Toxic above 400 micrograms a day.'],
+  [35,'Br','Bromine',4,17, 79.90, 5, 2.4, 3,'USA',35,true,'Brominated flame retardants in PCB', false,
+   'Flame retardants and pool chemicals. Pure bromine is one of only two liquid elements at room temperature.'],
+  [36,'Kr','Krypton',4,18, 83.80, 290, 0.0001, 0,'global',null,false,null, false,
+   'Energy-efficient lighting and high-performance lasers. The 1960 redefinition of the meter used a Kr-86 line.'],
+  [37,'Rb','Rubidium',5,1, 85.47, 15000, 90, 1,'Canada',null,false,null, false,
+   'Atomic clocks, GPS satellites, and laser cooling experiments. Tiny global market — almost a curio.'],
+  [38,'Sr','Strontium',5,2, 87.62, 6, 370, 2,'China',60,false,null, false,
+   'Crimson red in fireworks and emergency flares. Sr-90 from fallout mimics calcium in bone.'],
+  [39,'Y','Yttrium',5,3, 88.91, 30, 33, 1,'China',60,true,'Red and green phosphors in OLED display', false,
+   'YAG lasers and red phosphors. Once mined in California, now overwhelmingly Chinese.'],
+  [40,'Zr','Zirconium',5,4, 91.22, 35, 165, 1,'Australia',40,false,null, false,
+   'Cladding for nuclear fuel rods. Cubic zirconia is the famous diamond simulant.'],
+  [41,'Nb','Niobium',5,5, 92.91, 80, 20, 1,'Brazil',90,false,null, false,
+   'Superconducting magnets in MRI machines and the Large Hadron Collider. Brazil owns the market — one company, CBMM.'],
+  [42,'Mo','Molybdenum',5,6, 95.95, 25, 1.2, 1,'China',40,false,null, false,
+   'High-strength steel for armor, engines, and oil drilling. The bright filament behind tungsten.'],
+  [43,'Tc','Technetium',5,7, 98, null, null, 4,'reactor-bred',null,false,null, false,
+   'The first synthetic element. Tc-99m is the workhorse of nuclear medicine — 30 million scans a year.'],
+  [44,'Ru','Ruthenium',5,8, 101.07, 18000, 0.001, 1,'South Africa',95,true,'Hard disk perpendicular recording layer', false,
+   'Hard-disk magnetic coatings and chemical catalysts. Almost all of it comes from one country.'],
+  [45,'Rh','Rhodium',5,9, 102.91, 140000, 0.001, 1,'South Africa',80,false,null, false,
+   'Catalytic converters. Pricier than gold by an order of magnitude — and Russia controls a lot of what South Africa doesn\'t.'],
+  [46,'Pd','Palladium',5,10, 106.42, 32000, 0.015, 1,'Russia',40,true,'Capacitor electrodes; PCB plating', false,
+   'Catalytic converters, electronics, hydrogen storage. Russia controls 40% — sanctions volatility is permanent now.'],
+  [47,'Ag','Silver',5,11, 107.87, 1000, 0.075, 1,'Mexico',24,true,'Conductive traces; contacts; some camera coatings', false,
+   'Currency, mirrors, and the most conductive metal known. Strongest known antimicrobial metal.'],
+  [48,'Cd','Cadmium',5,12, 112.41, 3, 0.15, 5,'China',38,false,null, false,
+   'Severely toxic heavy metal. The itai-itai disease in Japan was cadmium poisoning from rice paddies.'],
+  [49,'In','Indium',5,13, 114.82, 350, 0.25, 2,'China',60,true,'Indium tin oxide — the transparent conductor in your touchscreen', false,
+   'The transparent conductor in every touchscreen. Almost no primary mining — it\'s a zinc smelting byproduct.'],
+  [50,'Sn','Tin',5,14, 118.71, 30, 2.3, 1,'China',30,true,'Solder on every PCB joint', true,
+   'Solder, food cans, pewter. The Bronze Age started here. A 3TG conflict mineral.'],
+  [51,'Sb','Antimony',5,15, 121.76, 12, 0.2, 4,'China',55,true,'Flame retardant synergist in PCBs', false,
+   'Toxic, but everywhere. Lead-acid batteries, flame retardants, and modern night-vision optics.'],
+  [52,'Te','Tellurium',5,16, 127.60, 70, 0.001, 3,'China',70,false,null, false,
+   'Cadmium telluride solar panels and high-density data storage. Rarer in the crust than platinum.'],
+  [53,'I','Iodine',5,17, 126.90, 30, 0.45, 1,'Chile',65,false,null, false,
+   'Antiseptic and the element your thyroid needs to regulate metabolism. Iodized salt eliminated cretinism.'],
+  [54,'Xe','Xenon',5,18, 131.29, 12000, 0.00003, 0,'global',null,false,null, false,
+   'Powers ion thrusters on deep-space probes. Used as a clinical anesthetic and a neuroprotectant.'],
+  [55,'Cs','Cesium',6,1, 132.91, 60000, 3, 2,'Canada',null,false,null, false,
+   'Atomic clocks define the second using a cesium transition. Reacts violently with air or water.'],
+  [56,'Ba','Barium',6,2, 137.33, 0.30, 425, 3,'China',32,false,null, false,
+   'Insoluble BaSO4 is swallowed for X-rays; soluble salts are toxic. The "barium meal" is a misnomer twice over.'],
+  [57,'La','Lanthanum',9,3, 138.91, 5, 39, 1,'China',60,true,'Camera lens optical glass', false,
+   'Camera lens glass, hydrogen storage, and old hybrid car NiMH batteries. China dominates refining.'],
+  [58,'Ce','Cerium',9,4, 140.12, 5, 67, 1,'China',60,true,'Glass polishing; UV cut filter coatings', false,
+   'The most abundant rare earth. Polishes glass, catalyzes oil, and lights every lighter flint.'],
+  [59,'Pr','Praseodymium',9,5, 140.91, 130, 9.2, 1,'China',85,true,'NdFeB magnet additive (heat resistance)', false,
+   'Strong magnets, welding goggles, fiber-optic amplifiers. Often co-mined with neodymium.'],
+  [60,'Nd','Neodymium',9,6, 144.24, 130, 41.5, 1,'China',85,true,'Permanent magnet in speakers, vibration motors, camera autofocus', false,
+   'The strongest permanent magnets known. In every wind turbine, EV motor, and the haptics in your phone.'],
+  [61,'Pm','Promethium',9,7, 145, null, null, 4,'reactor-bred',null,false,null, false,
+   'Radioactive. Once painted on watch dials and used in radioisotope thermoelectric generators.'],
+  [62,'Sm','Samarium',9,8, 150.36, 5, 7.05, 1,'China',85,false,null, false,
+   'Samarium-cobalt magnets work at temperatures that destroy NdFeB. Stealth aircraft, jet engines.'],
+  [63,'Eu','Europium',9,9, 151.96, 30, 2, 1,'China',85,true,'Red phosphor in OLED display; UV anti-counterfeit ink', false,
+   'Red phosphors in displays. Glows under UV in every euro banknote — anti-counterfeiting since 2002.'],
+  [64,'Gd','Gadolinium',9,10, 157.25, 30, 6.2, 2,'China',85,true,'Display phosphors; some MRI applications', false,
+   'MRI contrast agent — reveals tumors that would otherwise hide. Toxic if it leaks from chelation.'],
+  [65,'Tb','Terbium',9,11, 158.93, 2500, 1.2, 1,'China',95,true,'Green phosphor in OLED; magnetic alloys', false,
+   'Green phosphors and magnetostrictive alloys. China controls 95% of supply — heavy rare earth chokepoint.'],
+  [66,'Dy','Dysprosium',9,12, 162.50, 400, 5.2, 1,'China',95,true,'Heat-resistant additive in NdFeB magnets', false,
+   'Keeps EV motor magnets working when they get hot. Without dysprosium, the magnets demagnetize at speed.'],
+  [67,'Ho','Holmium',9,13, 164.93, 60, 1.3, 1,'China',85,false,null, false,
+   'Surgical lasers that fragment kidney stones. The strongest paramagnetic element.'],
+  [68,'Er','Erbium',9,14, 167.26, 30, 3.5, 1,'China',85,true,'Pink optical fiber dopant', false,
+   'Amplifies signals across every transoceanic fiber-optic cable. The internet runs on erbium-doped amplifiers.'],
+  [69,'Tm','Thulium',9,15, 168.93, 5000, 0.52, 1,'China',85,false,null, false,
+   'Portable X-ray sources and high-power lasers. The rarest stable lanthanide.'],
+  [70,'Yb','Ytterbium',9,16, 173.05, 30, 3.2, 1,'China',85,false,null, false,
+   'The most accurate atomic clocks ever built use ytterbium. They lose one second every 30 billion years.'],
+  [71,'Lu','Lutetium',9,17, 174.97, 6500, 0.8, 1,'China',85,false,null, false,
+   'Petroleum cracking catalysts and PET cancer scans. The densest and hardest lanthanide.'],
+  [72,'Hf','Hafnium',6,4, 178.49, 1500, 3, 1,'France',null,true,'High-k gate dielectric in advanced chips', false,
+   'Nuclear reactor control rods and the hafnium-oxide gate dielectric in every modern transistor.'],
+  [73,'Ta','Tantalum',6,5, 180.95, 300, 2, 1,'DR Congo',40,true,'Capacitors in every smartphone (the "T" in 3TG)', true,
+   'Capacitors in every smartphone. Mining is linked to conflict in the DRC — a 3TG conflict mineral.'],
+  [74,'W','Tungsten',6,6, 183.84, 50, 1.25, 1,'China',82,true,'Vibration motor weights; lithography contacts', true,
+   'Highest melting point of any metal. Lightbulb filaments, armor-piercing rounds, the weight in your phone\'s vibration motor.'],
+  [75,'Re','Rhenium',6,7, 186.21, 3000, 0.0007, 1,'Chile',55,false,null, false,
+   'Single-crystal turbine blades in jet engines. One of the rarest stable elements in the crust.'],
+  [76,'Os','Osmium',6,8, 190.23, 13000, 0.0015, 2,'South Africa',75,false,null, false,
+   'The densest naturally occurring element. Fountain pen tips, pacemaker electrodes. Vapor is brutally toxic.'],
+  [77,'Ir','Iridium',6,9, 192.22, 140000, 0.001, 1,'South Africa',75,false,null, false,
+   'Spark plug tips, deep-space probes. The asteroid that ended the dinosaurs left an iridium layer worldwide.'],
+  [78,'Pt','Platinum',6,10, 195.08, 33000, 0.005, 1,'South Africa',70,true,'Hard drive coatings; sensor electrodes', false,
+   'Catalytic converters, jewelry, chemotherapy drugs. South Africa\'s Bushveld holds most of the world\'s supply.'],
+  [79,'Au','Gold',6,11, 195.08, 87000, 0.004, 0,'China',10,true,'Connector plating; bond wires inside chips', true,
+   'Money, microchips, and a 5,000-year-old obsession. A 3TG conflict mineral — artisanal mining funds wars.'],
+  [80,'Hg','Mercury',6,12, 200.59, 60, 0.085, 5,'China',82,false,null, false,
+   'The only liquid metal at room temp. Beautiful, useful, a brutal neurotoxin. Minamata is named for what it did.'],
+  [81,'Tl','Thallium',6,13, 204.38, 7000, 0.85, 5,'Kazakhstan',null,false,null, false,
+   'The "poisoner\'s poison" — tasteless, odorless, lethal in tiny doses. Saddam Hussein\'s regime favored it.'],
+  [82,'Pb','Lead',6,14, 207.20, 2, 14, 5,'China',45,true,'Trace solder (mostly RoHS-eliminated); some shielding', false,
+   'Toxic to neurons; banned from gasoline, paint, and pipes. Its legacy is in every old building and every old IQ score.'],
+  [83,'Bi','Bismuth',6,15, 208.98, 5, 0.0085, 1,'China',80,false,null, false,
+   'Iridescent rainbow crystals. The active ingredient in Pepto-Bismol. Less toxic than lead despite sitting next to it.'],
+  [84,'Po','Polonium',6,16, 209, null, 2e-10, 5,'reactor-bred',null,false,null, false,
+   'Used to assassinate Alexander Litvinenko in 2006. A microgram is lethal; a gram could poison millions.'],
+  [85,'At','Astatine',6,17, 210, null, null, 5,'reactor-bred',null,false,null, false,
+   'The rarest naturally occurring element. Less than 30 grams exist on Earth at any moment.'],
+  [86,'Rn','Radon',6,18, 222, null, 4e-13, 5,'natural',null,false,null, false,
+   'Invisible radioactive gas seeping from soil. Second leading cause of lung cancer in non-smokers.'],
+  [87,'Fr','Francium',7,1, 223, null, null, 5,'natural',null,false,null, false,
+   'Decays in minutes. Less than an ounce of natural francium exists on Earth at any moment.'],
+  [88,'Ra','Radium',7,2, 226, null, 9e-7, 5,'reactor-bred',null,false,null, false,
+   'Once painted on watch dials. The "radium girls" who painted them died of jaw necrosis and cancer.'],
+  [89,'Ac','Actinium',10,3, 227, null, 5e-10, 5,'reactor-bred',null,false,null, false,
+   'Glows pale blue in the dark from its own radioactivity. Used in targeted alpha-therapy for cancer.'],
+  [90,'Th','Thorium',10,4, 232.04, 200, 9.6, 2,'India',null,false,null, false,
+   'A potential next-generation nuclear fuel. Weakly radioactive; once in gas-lamp mantles and lens coatings.'],
+  [91,'Pa','Protactinium',10,5, 231, null, 1.4e-6, 5,'reactor-bred',null,false,null, false,
+   'One of the rarest and most expensive natural elements. Highly radioactive.'],
+  [92,'U','Uranium',10,6, 238.03, 200, 2.7, 4,'Kazakhstan',42,false,null, false,
+   'Powers cities and ends them. Reactors and atomic weapons share the same isotope, just enriched differently.'],
+  [93,'Np','Neptunium',10,7, 237, null, null, 5,'reactor-bred',null,false,null, false,
+   'The first transuranic element. Produced in nuclear reactors as a uranium decay product.'],
+  [94,'Pu','Plutonium',10,8, 244, null, null, 5,'reactor-bred',null,false,null, false,
+   'Fuels nuclear weapons and deep-space probes. Voyager and Curiosity run on Pu-238 thermal generators.'],
+  [95,'Am','Americium',10,9, 243, 1500000, null, 5,'reactor-bred',null,false,null, false,
+   'Sits inside nearly every smoke detector. A microgram is harmless behind a foil; a gram is a serious problem.'],
+  [96,'Cm','Curium',10,10, 247, null, null, 5,'reactor-bred',null,false,null, false,
+   'Self-heats from radioactivity. Named for Marie and Pierre Curie.'],
+  [97,'Bk','Berkelium',10,11, 247, null, null, 5,'lab-only',null,false,null, false,
+   'Synthesized at Berkeley in 1949. Used as the target to discover element 117, tennessine.'],
+  [98,'Cf','Californium',10,12, 251, 27000000000, null, 5,'lab-only',null,false,null, false,
+   'A single gram costs $27 million. Used in oil-well neutron sources and to start nuclear reactors.'],
+  [99,'Es','Einsteinium',10,13, 252, null, null, 5,'lab-only',null,false,null, false,
+   'Discovered in fallout from the first hydrogen bomb test, 1952. Visible amounts have rarely been produced.'],
+  [100,'Fm','Fermium',10,14, 257, null, null, 5,'lab-only',null,false,null, false,
+   'The heaviest element produced by neutron bombardment. Only ever made atom by atom.'],
+  [101,'Md','Mendelevium',10,15, 258, null, null, 5,'lab-only',null,false,null, false,
+   'Synthetic. Named for the periodic table\'s creator, Dmitri Mendeleev.'],
+  [102,'No','Nobelium',10,16, 259, null, null, 5,'lab-only',null,false,null, false,
+   'Synthetic, radioactive. A few atoms at a time — never enough to weigh.'],
+  [103,'Lr','Lawrencium',10,17, 266, null, null, 5,'lab-only',null,false,null, false,
+   'The last actinide. Vanishingly rare; named for cyclotron inventor Ernest Lawrence.'],
+  [104,'Rf','Rutherfordium',7,4, 267, null, null, 5,'lab-only',null,false,null, false,
+   'Synthetic. Only a few atoms have ever existed. Half-life measured in seconds.'],
+  [105,'Db','Dubnium',7,5, 268, null, null, 5,'lab-only',null,false,null, false,
+   'Synthetic; radioactive. Lasts seconds. Named for the Russian research city Dubna.'],
+  [106,'Sg','Seaborgium',7,6, 269, null, null, 5,'lab-only',null,false,null, false,
+   'Named for Glenn Seaborg while he was still alive — the first such honor on the periodic table.'],
+  [107,'Bh','Bohrium',7,7, 270, null, null, 5,'lab-only',null,false,null, false,
+   'Synthetic. Only ever made atom-by-atom. Named for Niels Bohr.'],
+  [108,'Hs','Hassium',7,8, 269, null, null, 5,'lab-only',null,false,null, false,
+   'Synthetic. One of the heaviest elements with measurable chemistry — it forms a tetroxide like its lighter cousins.'],
+  [109,'Mt','Meitnerium',7,9, 278, null, null, 5,'lab-only',null,false,null, false,
+   'Synthetic. Named for Lise Meitner, who explained nuclear fission and was passed over for the Nobel.'],
+  [110,'Ds','Darmstadtium',7,10, 281, null, null, 5,'lab-only',null,false,null, false,
+   'Synthetic. First made at the GSI lab in Darmstadt, Germany.'],
+  [111,'Rg','Roentgenium',7,11, 282, null, null, 5,'lab-only',null,false,null, false,
+   'Synthetic. Named for Wilhelm Röntgen, who discovered X-rays.'],
+  [112,'Cn','Copernicium',7,12, 285, null, null, 5,'lab-only',null,false,null, false,
+   'Synthetic. Predicted to be a gas at room temperature — the only metallic element that might be.'],
+  [113,'Nh','Nihonium',7,13, 286, null, null, 5,'lab-only',null,false,null, false,
+   'The first element discovered in Asia. Synthesized at RIKEN in Japan, 2004.'],
+  [114,'Fl','Flerovium',7,14, 289, null, null, 5,'lab-only',null,false,null, false,
+   'Synthetic. Sits in the predicted "island of stability" where superheavy elements might live longer.'],
+  [115,'Mc','Moscovium',7,15, 290, null, null, 5,'lab-only',null,false,null, false,
+   'Synthetic. Subject of UFO conspiracy theories from Bob Lazar — element 115 was supposedly the propulsion fuel.'],
+  [116,'Lv','Livermorium',7,16, 293, null, null, 5,'lab-only',null,false,null, false,
+   'Synthetic. Named for the Lawrence Livermore National Laboratory.'],
+  [117,'Ts','Tennessine',7,17, 294, null, null, 5,'lab-only',null,false,null, false,
+   'Synthetic. Among the most recently confirmed — produced by bombarding berkelium with calcium.'],
+  [118,'Og','Oganesson',7,18, 294, null, null, 5,'lab-only',null,false,null, false,
+   'Heaviest known element. Named for Yuri Oganessian — the only element named for a living person at the time.']
+];
+
+/* Map to objects for ergonomic access */
+const E = ELEMENTS.map(a => ({
+  z: a[0], sym: a[1], name: a[2], row: a[3], col: a[4], mass: a[5],
+  price: a[6], abundance: a[7], tox: a[8],
+  producer: a[9], producerShare: a[10],
+  inPhone: a[11], phoneRole: a[12], conflict: a[13],
+  note: a[14]
+}));
+
+/* ============ STATE ============ */
+const state = {
+  lens: 'heatmap',
+  metric: 'price',
+  selected: null
+};
+
+const $ = id => document.getElementById(id);
+
+/* ============ COLOR SCALES ============ */
+function logScale(value, min, max) {
+  if (value == null || value <= 0) return null;
+  const v = Math.log10(value);
+  const a = Math.log10(min);
+  const b = Math.log10(max);
+  return Math.max(0, Math.min(1, (v - a) / (b - a)));
+}
+function linScale(value, min, max) {
+  if (value == null) return null;
+  return Math.max(0, Math.min(1, (value - min) / (max - min)));
+}
+/* Mix from dark to vivid for amber/steel/rust/sage */
+function tintFor(t, hueRgb) {
+  if (t == null) return null;
+  // Interpolate from 0.05 to 0.95 opacity-equivalent: return rgba string
+  const [r,g,b] = hueRgb;
+  return `rgba(${r},${g},${b},1)`;
+}
+const HUE = {
+  amber: [212,160,76],
+  steel: [106,146,184],
+  rust:  [179,74,58],
+  sage:  [122,146,102],
+  plum:  [138,90,154]
+};
+
+/* ============ METRIC DEFINITIONS ============ */
+const METRICS = {
+  price: {
+    label: 'Price',
+    unit: '$/kg',
+    color: 'amber',
+    scale: 'log',
+    domain: [0.1, 1e8],
+    ticks: ['$0.10', '$10', '$1k', '$100k', '$10M', '$10B'],
+    accessor: e => e.price,
+    fmt: v => v == null ? '—' :
+      v >= 1e9 ? '$' + (v/1e9).toFixed(1) + 'B' :
+      v >= 1e6 ? '$' + (v/1e6).toFixed(v >= 1e7 ? 0 : 1) + 'M' :
+      v >= 1e3 ? '$' + (v/1e3).toFixed(v >= 1e4 ? 0 : 1) + 'k' :
+      v >= 1   ? '$' + v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2) :
+                 '$' + v.toFixed(2)
+  },
+  abundance: {
+    label: 'Crustal Rarity',
+    unit: 'ppm',
+    color: 'steel',
+    scale: 'log',
+    domain: [1e-10, 1e6],
+    invert: true,  // rarer = more colored
+    accessor: e => e.abundance,
+    fmt: v => v == null ? '—' :
+      v >= 1000 ? (v/1000).toFixed(0) + 'k ppm' :
+      v >= 1    ? v.toFixed(v >= 10 ? 0 : 1) + ' ppm' :
+      v >= 0.001 ? v.toFixed(3) + ' ppm' :
+                   v.toExponential(1) + ' ppm'
+  },
+  tox: {
+    label: 'Toxicity',
+    unit: '0–5 scale',
+    color: 'rust',
+    scale: 'lin',
+    domain: [0, 5],
+    accessor: e => e.tox,
+    fmt: v => v == null ? '—' : ['inert','low','mild','moderate','high','severe'][v]
+  },
+  supply: {
+    label: 'Supply Concentration',
+    unit: 'top country %',
+    color: 'plum',
+    scale: 'lin',
+    domain: [0, 100],
+    accessor: e => e.producerShare,
+    fmt: (v, e) => {
+      if (v == null) return e && e.producer ? e.producer : '—';
+      return v + '% · ' + (e ? e.producer : '');
+    }
+  }
+};
+
+/* ============ CELL FILL ============ */
+function fillForCell(el, lens) {
+  let hue, opacity;
+  if (lens === 'heatmap') {
+    const m = METRICS[state.metric];
+    const v = m.accessor(el);
+    if (v == null) return { hue: null, opacity: 0, hueName: m.color };
+    let t;
+    if (m.scale === 'log') {
+      t = logScale(v, m.domain[0], m.domain[1]);
+    } else {
+      t = linScale(v, m.domain[0], m.domain[1]);
+    }
+    if (m.invert) t = 1 - t;
+    hue = HUE[m.color];
+    opacity = 0.08 + 0.55 * t;  // 0.08 .. 0.63
+    return { hue, opacity, hueName: m.color };
+  }
+  if (lens === 'phone') {
+    if (el.inPhone) {
+      return { hue: HUE.sage, opacity: 0.45, hueName: 'sage' };
+    }
+    return { hue: null, opacity: 0, hueName: 'sage' };
+  }
+  if (lens === 'supply') {
+    const v = el.producerShare;
+    if (v == null) return { hue: null, opacity: 0, hueName: 'rust' };
+    const t = linScale(v, 20, 95);
+    return { hue: HUE.rust, opacity: 0.10 + 0.55 * t, hueName: 'rust' };
+  }
+  return { hue: null, opacity: 0, hueName: 'amber' };
+}
+
+/* ============ RENDER PERIODIC ============ */
+function renderTable() {
+  const main = $('periodic');
+  const ln = $('lanthActinides');
+  main.innerHTML = '';
+  ln.innerHTML = '';
+
+  E.forEach(el => {
+    const cell = makeCell(el);
+    if (el.row >= 9) {
+      cell.style.gridRow = el.row - 8;
+      cell.style.gridColumn = el.col;
+      ln.appendChild(cell);
+    } else {
+      cell.style.gridRow = el.row;
+      cell.style.gridColumn = el.col;
+      main.appendChild(cell);
+    }
+  });
+
+  // markers for La/Ac series in main grid
+  const m1 = document.createElement('div');
+  m1.className = 'cell ln-marker';
+  m1.style.gridRow = 6; m1.style.gridColumn = 3;
+  m1.innerHTML = '<span class="sym">57–71</span>';
+  main.appendChild(m1);
+  const m2 = document.createElement('div');
+  m2.className = 'cell ln-marker';
+  m2.style.gridRow = 7; m2.style.gridColumn = 3;
+  m2.innerHTML = '<span class="sym">89–103</span>';
+  main.appendChild(m2);
+}
+
+function makeCell(el) {
+  const cell = document.createElement('div');
+  cell.className = 'cell';
+  cell.dataset.z = el.z;
+  cell.innerHTML = `
+    <span class="num">${el.z}</span>
+    <span class="sym">${el.sym}</span>
+    <span class="name">${el.name}</span>
+    <span class="badge"></span>
+  `;
+  cell.addEventListener('click', () => selectElement(el.z));
+  return cell;
+}
+
+/* Apply current lens fills to all cells */
+function applyLens() {
+  const lens = state.lens;
+  document.querySelectorAll('.cell:not(.ln-marker)').forEach(cell => {
+    const z = +cell.dataset.z;
+    const el = E[z - 1];
+    const { hue, opacity, hueName } = fillForCell(el, lens);
+    if (hue) {
+      cell.style.setProperty('--cell-fill', `rgb(${hue[0]},${hue[1]},${hue[2]})`);
+      cell.style.setProperty('--cell-opacity', opacity);
+      cell.style.setProperty('--cell-edge', `rgb(${hue[0]},${hue[1]},${hue[2]})`);
+      cell.style.setProperty('--cell-edge-op', Math.min(1, opacity + 0.25));
+      cell.classList.remove('no-data');
+    } else {
+      cell.style.setProperty('--cell-fill', 'transparent');
+      cell.style.setProperty('--cell-opacity', 0);
+      cell.style.setProperty('--cell-edge', 'transparent');
+      cell.style.setProperty('--cell-edge-op', 0);
+      cell.classList.add('no-data');
+    }
+
+    // Phone lens: dim non-phone elements
+    if (lens === 'phone') {
+      if (!el.inPhone) cell.classList.add('dim');
+      else cell.classList.remove('dim');
+    } else {
+      cell.classList.remove('dim');
+    }
+
+    // Badges
+    const badge = cell.querySelector('.badge');
+    badge.className = 'badge';
+    badge.textContent = '';
+    if (lens === 'phone' && el.conflict && el.inPhone) {
+      badge.textContent = '⚑';
+      badge.classList.add('flag');
+    } else if (lens === 'supply' && el.producerShare && el.producerShare >= 60) {
+      badge.textContent = countryCode(el.producer);
+    } else if (lens === 'heatmap' && state.metric === 'tox' && el.tox >= 4) {
+      badge.textContent = '☠';
+      badge.classList.add('flag');
+    }
+  });
+}
+
+function countryCode(name) {
+  const map = {
+    'China':'CN','Australia':'AU','DR Congo':'CD','Russia':'RU','South Africa':'ZA',
+    'USA':'US','Chile':'CL','Brazil':'BR','Indonesia':'ID','Kazakhstan':'KZ',
+    'Canada':'CA','Mexico':'MX','India':'IN','Turkey':'TR','Japan':'JP',
+    'France':'FR','Ukraine':'UA','global':'··','reactor-bred':'··','lab-only':'··','natural':'··'
+  };
+  return map[name] || '··';
+}
+
+/* ============ PLANE (scatter) ============ */
+function renderPlane() {
+  const svg = $('planeSvg');
+  const W = 1000, H = 600;
+  const M = { l: 70, r: 60, t: 50, b: 70 };
+  const innerW = W - M.l - M.r, innerH = H - M.t - M.b;
+
+  // Domain: x = abundance log scale, y = price log scale
+  const xDomain = [1e-4, 1e6];
+  const yDomain = [0.05, 5e5];
+
+  const xScale = v => M.l + innerW * (Math.log10(v) - Math.log10(xDomain[0])) / (Math.log10(xDomain[1]) - Math.log10(xDomain[0]));
+  const yScale = v => M.t + innerH - innerH * (Math.log10(v) - Math.log10(yDomain[0])) / (Math.log10(yDomain[1]) - Math.log10(yDomain[0]));
+
+  let parts = [];
+
+  // Frame
+  parts.push(`<rect x="${M.l}" y="${M.t}" width="${innerW}" height="${innerH}" fill="none" stroke="rgba(42,37,32,1)" stroke-width="1"/>`);
+
+  // Gridlines & axes
+  const xTicks = [{v:1e-4,l:'0.0001'}, {v:0.01,l:'0.01'}, {v:1,l:'1'}, {v:100,l:'100'}, {v:10000,l:'10k'}, {v:1e6,l:'1M'}];
+  const yTicks = [{v:0.1,l:'$0.10'}, {v:1,l:'$1'}, {v:10,l:'$10'}, {v:100,l:'$100'}, {v:1000,l:'$1k'}, {v:10000,l:'$10k'}, {v:100000,l:'$100k'}];
+  xTicks.forEach(t => {
+    const x = xScale(t.v);
+    parts.push(`<line class="plane-grid" x1="${x}" y1="${M.t}" x2="${x}" y2="${M.t + innerH}"/>`);
+    parts.push(`<text class="plane-axis" x="${x}" y="${M.t + innerH + 18}" text-anchor="middle">${t.l}</text>`);
+  });
+  yTicks.forEach(t => {
+    const y = yScale(t.v);
+    parts.push(`<line class="plane-grid" x1="${M.l}" y1="${y}" x2="${M.l + innerW}" y2="${y}"/>`);
+    parts.push(`<text class="plane-axis" x="${M.l - 8}" y="${y + 3}" text-anchor="end">${t.l}</text>`);
+  });
+
+  // Axis titles
+  parts.push(`<text class="plane-axis-title" x="${M.l + innerW/2}" y="${H - 18}" text-anchor="middle">← Rarer · crustal abundance ppm · More common →</text>`);
+  parts.push(`<text class="plane-axis-title" x="${-M.t - innerH/2}" y="20" text-anchor="middle" transform="rotate(-90)">Price · $/kg →</text>`);
+
+  // Quadrant labels
+  parts.push(`<text class="plane-quadrant-label" x="${M.l + 16}" y="${M.t + 24}">Rare and dear</text>`);
+  parts.push(`<text class="plane-quadrant-label" x="${M.l + innerW - 16}" y="${M.t + 24}" text-anchor="end">Common but expensive</text>`);
+  parts.push(`<text class="plane-quadrant-label" x="${M.l + 16}" y="${M.t + innerH - 14}">Rare but cheap</text>`);
+  parts.push(`<text class="plane-quadrant-label" x="${M.l + innerW - 16}" y="${M.t + innerH - 14}" text-anchor="end">Common and cheap</text>`);
+
+  // Dots
+  const labeled = new Set(['H','C','O','Si','Fe','Al','Cu','Au','Ag','Pt','Pd','Rh','Li','Co','Nd','Dy','U','Pu','Cf','He','Hg','Pb','Tl','Ga','Ge','In','Ta','W','Os','Re','Ir','As','Be','Cs','Rb']);
+  E.forEach(el => {
+    if (el.price == null || el.abundance == null || el.price <= 0 || el.abundance <= 0) return;
+    const x = xScale(el.abundance);
+    const y = yScale(el.price);
+    const hue = HUE[colorForElement(el)];
+    parts.push(`<circle class="plane-dot" data-z="${el.z}" cx="${x}" cy="${y}" r="4.5" fill="rgb(${hue[0]},${hue[1]},${hue[2]})" fill-opacity="0.85" stroke="rgba(0,0,0,0.5)" stroke-width="0.5"/>`);
+    if (labeled.has(el.sym)) {
+      const major = ['Au','Pt','Cf','Li','Co','Nd','Si','Fe','Cu','U','He'].includes(el.sym);
+      parts.push(`<text class="plane-label ${major ? 'major' : ''}" data-z="${el.z}" x="${x + 7}" y="${y + 3}">${el.sym}</text>`);
+    }
+  });
+
+  svg.innerHTML = parts.join('\n');
+
+  // attach listeners
+  svg.querySelectorAll('.plane-dot').forEach(dot => {
+    dot.addEventListener('click', () => selectElement(+dot.dataset.z));
+  });
+}
+
+function colorForElement(el) {
+  // Price-driven color in scatter: very pricey = amber, average = steel, toxic=rust override
+  if (el.tox >= 4) return 'rust';
+  if (el.price && el.price >= 10000) return 'amber';
+  if (el.inPhone) return 'sage';
+  return 'steel';
+}
+
+function formatPrice(v) {
+  if (v >= 1e9) return '$' + (v/1e9) + 'B';
+  if (v >= 1e6) return '$' + (v/1e6) + 'M';
+  if (v >= 1e3) return '$' + (v/1e3) + 'k';
+  if (v >= 1) return '$' + v;
+  return '$' + v;
+}
+function formatPpm(v) {
+  if (v >= 1e3) return v.toExponential(0).replace('e+', 'e');
+  if (v >= 1) return v + '';
+  if (v >= 1e-3) return v.toFixed(3);
+  return v.toExponential(0).replace('e-', 'e-');
+}
+
+/* ============ LENS CONTROLS ============ */
+function renderControls() {
+  const c = $('lensControls');
+  c.innerHTML = '';
+  if (state.lens === 'heatmap') {
+    c.innerHTML = `
+      <span class="control-label">Color by</span>
+      <div class="metric-toggle" id="metricToggle">
+        ${Object.keys(METRICS).map(k => `
+          <button class="metric ${k===state.metric?'active':''}" data-metric="${k}"
+            style="--metric-color: var(--${METRICS[k].color})">${METRICS[k].label}</button>
+        `).join('')}
+      </div>
+      <div class="scale-bar">
+        <span>${scaleLow()}</span>
+        <span class="scale-grad" style="background: linear-gradient(to right,
+          rgba(${HUE[METRICS[state.metric].color].join(',')},0.05),
+          rgba(${HUE[METRICS[state.metric].color].join(',')},0.7))"></span>
+        <span>${scaleHigh()}</span>
+      </div>
+    `;
+    document.querySelectorAll('#metricToggle .metric').forEach(b => {
+      b.addEventListener('click', () => {
+        state.metric = b.dataset.metric;
+        renderControls();
+        applyLens();
+      });
+    });
+  } else if (state.lens === 'phone') {
+    const phoneCount = E.filter(e => e.inPhone).length;
+    const conflictCount = E.filter(e => e.inPhone && e.conflict).length;
+    c.innerHTML = `
+      <span class="control-label">In a typical smartphone</span>
+      <span style="font-family:'JetBrains Mono', monospace; font-size:0.72rem; color: var(--ink); letter-spacing:0.06em;">
+        ${phoneCount} elements · ${conflictCount} flagged as conflict minerals (3TG + Co)
+      </span>
+    `;
+  } else if (state.lens === 'supply') {
+    c.innerHTML = `
+      <span class="control-label">Single-country share of mine production</span>
+      <div class="scale-bar">
+        <span>20%</span>
+        <span class="scale-grad" style="background: linear-gradient(to right,
+          rgba(${HUE.rust.join(',')},0.10),
+          rgba(${HUE.rust.join(',')},0.65))"></span>
+        <span>95%</span>
+      </div>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--ink-faint);letter-spacing:0.1em;">Code on tile = top producer if ≥60%</span>
+    `;
+  } else if (state.lens === 'plane') {
+    c.innerHTML = `
+      <span class="control-label">Crustal abundance × Price · log–log</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--ink-faint);letter-spacing:0.1em;">
+        Synthetic and uncommercialized elements omitted · color encodes role
+      </span>
+    `;
+  }
+}
+function scaleLow() {
+  const m = METRICS[state.metric];
+  if (m.invert) return m.fmt(m.domain[1]);  // most common
+  return m.fmt(m.domain[0]);
+}
+function scaleHigh() {
+  const m = METRICS[state.metric];
+  if (m.invert) return m.fmt(m.domain[0]);  // rarest
+  return m.fmt(m.domain[1]);
+}
+
+/* ============ DETAIL PANEL ============ */
+function selectElement(z) {
+  state.selected = z;
+  const el = E[z - 1];
+  const detail = $('detail');
+
+  // Compute color for detail accent based on current lens / dominant trait
+  let accentName = 'amber';
+  if (el.tox >= 4) accentName = 'rust';
+  else if (el.inPhone) accentName = 'sage';
+  else if (el.price && el.price >= 5000) accentName = 'amber';
+  else accentName = 'steel';
+  const accent = `rgb(${HUE[accentName].join(',')})`;
+
+  detail.style.setProperty('--detail-color', accent);
+
+  const phoneTag = el.inPhone
+    ? `<span class="tag phone">In your phone${el.phoneRole ? ' · ' + el.phoneRole : ''}</span>` : '';
+  const conflictTag = el.conflict ? `<span class="tag warn">Conflict mineral</span>` : '';
+  const toxTag = el.tox >= 4 ? `<span class="tag warn">Highly toxic</span>` : '';
+  const preciousTag = el.price && el.price >= 10000 ? `<span class="tag precious">Precious metal tier</span>` : '';
+
+  const toxBar = '<div class="toxbar">' + [0,1,2,3,4].map(i =>
+    `<span class="${i < el.tox ? 'on' : ''}"></span>`).join('') + '</div>';
+
+  detail.innerHTML = `
+    <div class="detail-card">
+      <div class="detail-tile">
+        <span class="num">${el.z}</span>
+        <span class="mass">${el.mass}</span>
+        <span class="sym">${el.sym}</span>
+        <span class="name">${el.name}</span>
+      </div>
+      <div class="detail-info">
+        <div class="detail-name">${el.name}</div>
+        <div class="detail-meta">
+          <span>${el.sym}</span> · Z=${el.z} · ${groupName(el)} · row ${el.row >= 9 ? (el.row === 9 ? 'lanthanide' : 'actinide') : el.row}
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-label">Price</span>
+            <span class="stat-value ${el.price==null?'muted':''}">${METRICS.price.fmt(el.price)}</span>
+            <span class="stat-unit">${el.price == null ? 'no commercial market' : 'USD per kg'}</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Crustal abundance</span>
+            <span class="stat-value ${el.abundance==null?'muted':''}">${METRICS.abundance.fmt(el.abundance)}</span>
+            <span class="stat-unit">${el.abundance == null ? 'synthetic / trace only' : rarityWord(el.abundance)}</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Toxicity</span>
+            <span class="stat-value">${METRICS.tox.fmt(el.tox)}</span>
+            ${toxBar}
+          </div>
+          <div class="stat">
+            <span class="stat-label">Top producer</span>
+            <span class="stat-value">${producerLabel(el)}</span>
+            <span class="stat-unit">${el.producerShare ? el.producerShare + '% of global mine output' : '—'}</span>
+          </div>
+        </div>
+        <p class="detail-note">${el.note}</p>
+        <div class="detail-tags">
+          ${phoneTag}${conflictTag}${toxTag}${preciousTag}
+        </div>
+      </div>
+    </div>
+  `;
+
+  // highlight cell
+  document.querySelectorAll('.cell, .plane-dot').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll(`.cell[data-z="${z}"], .plane-dot[data-z="${z}"]`).forEach(c => c.classList.add('active'));
+}
+
+function rarityWord(ppm) {
+  if (ppm >= 10000) return 'major crustal element';
+  if (ppm >= 100) return 'common';
+  if (ppm >= 1) return 'uncommon';
+  if (ppm >= 0.01) return 'rare';
+  if (ppm >= 0.0001) return 'very rare';
+  return 'vanishingly rare';
+}
+
+function producerLabel(el) {
+  if (el.producer === 'global') return 'Globally distributed';
+  if (el.producer === 'reactor-bred') return 'Made in reactors';
+  if (el.producer === 'lab-only') return 'Lab synthesis only';
+  if (el.producer === 'natural') return 'Trace decay product';
+  return el.producer;
+}
+
+function groupName(el) {
+  const c = el.col, r = el.row;
+  if (r >= 9) return r === 9 ? 'lanthanide' : 'actinide';
+  if (c === 1 && el.z !== 1) return 'alkali metal';
+  if (c === 2) return 'alkaline earth';
+  if (c >= 3 && c <= 12) return 'transition metal';
+  if (c === 18) return 'noble gas';
+  if (c === 17) return 'halogen';
+  if (el.sym === 'H') return 'nonmetal';
+  // post-transition / metalloid / nonmetal heuristics
+  const metalloids = ['B','Si','Ge','As','Sb','Te','Po'];
+  if (metalloids.includes(el.sym)) return 'metalloid';
+  const nonmetals = ['C','N','P','O','S','Se'];
+  if (nonmetals.includes(el.sym)) return 'nonmetal';
+  return 'post-transition metal';
+}
+
+/* ============ LENS SWITCHING ============ */
+function setLens(lens) {
+  state.lens = lens;
+  document.querySelectorAll('.lens').forEach(b => b.classList.toggle('active', b.dataset.lens === lens));
+  // toggle stage views
+  if (lens === 'plane') {
+    $('view-table').classList.remove('active');
+    $('view-plane').classList.add('active');
+    renderPlane();
+  } else {
+    $('view-table').classList.add('active');
+    $('view-plane').classList.remove('active');
+    applyLens();
+  }
+  renderControls();
+  // re-highlight
+  if (state.selected) {
+    document.querySelectorAll(`.cell[data-z="${state.selected}"], .plane-dot[data-z="${state.selected}"]`).forEach(c => c.classList.add('active'));
+  }
+}
+
+document.querySelectorAll('.lens').forEach(b => {
+  b.addEventListener('click', () => setLens(b.dataset.lens));
+});
+
+/* ============ INIT ============ */
+renderTable();
+renderControls();
+applyLens();
+
+// pre-select carbon for a non-empty default state
+selectElement(6);
+</script>
+</body>
+</html>
