@@ -735,7 +735,7 @@
 
 <nav class="lenses" id="lenses">
   <button class="lens active" data-lens="heatmap" style="--lens-color: var(--amber)"><span class="num">01</span>Heatmap</button>
-  <button class="lens" data-lens="plane" style="--lens-color: var(--steel)"><span class="num">02</span>The Rarity Plane</button>
+  <button class="lens" data-lens="cosmic" style="--lens-color: var(--steel)"><span class="num">02</span>Cosmic Origins</button>
   <button class="lens" data-lens="phone" style="--lens-color: var(--sage)"><span class="num">03</span>In Your Phone</button>
   <button class="lens" data-lens="supply" style="--lens-color: var(--rust)"><span class="num">04</span>Supply Concentration</button>
   <button class="lens" data-lens="character" style="--lens-color: var(--plum)"><span class="num">05</span>Value &amp; Peril</button>
@@ -1310,6 +1310,66 @@ const CHARACTER = {'H':'v','He':'v','Li':'v','Be':'b','B':'v','C':'v','N':'v','O
 const CHAR_LABELS = { v: 'Valuable', d: 'Dangerous', b: 'Both', n: 'Common' };
 const CHAR_HUES   = { v: HUE.sage, d: HUE.rust, b: HUE.amber, n: [120,114,104] };
 
+/* Cosmic origin: where each element was forged in the universe */
+const ORIGIN = {
+  H:'bigbang',He:'bigbang',
+  Li:'cosmicray',Be:'cosmicray',B:'cosmicray',
+  C:'fusion',N:'fusion',O:'fusion',F:'fusion',Ne:'fusion',
+  Na:'fusion',Mg:'fusion',Al:'fusion',Si:'fusion',P:'fusion',
+  S:'fusion',Cl:'fusion',Ar:'fusion',K:'fusion',Ca:'fusion',
+  Sc:'fusion',Ti:'fusion',V:'fusion',Cr:'fusion',Mn:'fusion',Fe:'fusion',
+  Co:'sprocess',Ni:'sprocess',Cu:'sprocess',Zn:'sprocess',Ga:'sprocess',Ge:'sprocess',
+  As:'sprocess',Se:'sprocess',Br:'sprocess',Kr:'sprocess',Rb:'sprocess',Sr:'sprocess',
+  Y:'sprocess',Zr:'sprocess',Nb:'sprocess',Mo:'sprocess',
+  Tc:'synthetic',
+  Ru:'sprocess',Rh:'sprocess',Pd:'sprocess',Ag:'sprocess',Cd:'sprocess',
+  In:'sprocess',Sn:'sprocess',Sb:'sprocess',Te:'sprocess',
+  I:'rprocess',
+  Xe:'sprocess',Cs:'sprocess',Ba:'sprocess',
+  La:'sprocess',Ce:'sprocess',Pr:'sprocess',Nd:'sprocess',
+  Pm:'synthetic',
+  Sm:'sprocess',
+  Eu:'rprocess',Gd:'rprocess',Tb:'rprocess',Dy:'rprocess',Ho:'rprocess',
+  Er:'rprocess',Tm:'rprocess',Yb:'rprocess',Lu:'rprocess',
+  Hf:'sprocess',Ta:'sprocess',W:'sprocess',
+  Re:'rprocess',Os:'rprocess',Ir:'rprocess',Pt:'rprocess',Au:'rprocess',
+  Hg:'sprocess',Tl:'sprocess',Pb:'sprocess',
+  Bi:'rprocess',Po:'rprocess',At:'rprocess',Rn:'rprocess',
+  Fr:'rprocess',Ra:'rprocess',Ac:'rprocess',
+  Th:'rprocess',Pa:'rprocess',U:'rprocess',
+  Np:'synthetic',Pu:'synthetic',Am:'synthetic',Cm:'synthetic',
+  Bk:'synthetic',Cf:'synthetic',Es:'synthetic',Fm:'synthetic',
+  Md:'synthetic',No:'synthetic',Lr:'synthetic',
+  Rf:'synthetic',Db:'synthetic',Sg:'synthetic',Bh:'synthetic',
+  Hs:'synthetic',Mt:'synthetic',Ds:'synthetic',Rg:'synthetic',
+  Cn:'synthetic',Nh:'synthetic',Fl:'synthetic',
+  Mc:'synthetic',Lv:'synthetic',Ts:'synthetic',Og:'synthetic'
+};
+const ORIGIN_LABELS = {
+  bigbang:   'Big Bang',
+  cosmicray: 'Cosmic rays',
+  fusion:    'Stellar fusion',
+  sprocess:  'Dying low-mass stars',
+  rprocess:  'Cataclysmic events',
+  synthetic: 'Human-made'
+};
+const ORIGIN_NOTE = {
+  bigbang:   'The first three minutes of the universe.',
+  cosmicray: 'Forged when cosmic rays smash into heavier nuclei in interstellar space — these isotopes are too fragile to survive a star.',
+  fusion:    'Built up in stellar cores and red-giant shells through fusion. The atoms in your body.',
+  sprocess:  'Slow neutron capture inside dying low-mass stars (AGB phase).',
+  rprocess:  'Rapid neutron capture during supernovae and neutron-star mergers. The gold in your wedding ring came from a collision of dead stars.',
+  synthetic: "Doesn't naturally exist in any meaningful amount. Bred in reactors or accelerators by humans."
+};
+const ORIGIN_HUES = {
+  bigbang:   HUE.steel,
+  cosmicray: HUE.sage,
+  fusion:    HUE.amber,
+  sprocess:  HUE.rust,
+  rprocess:  HUE.plum,
+  synthetic: [130,124,116]
+};
+
 /* ============ METRIC DEFINITIONS ============ */
 const METRICS = {
   price: {
@@ -1399,6 +1459,12 @@ function fillForCell(el, lens) {
     if (!c || c === 'n') return { hue: HUE.steel, opacity: 0.06, hueName: 'steel' };
     const hue = CHAR_HUES[c];
     return { hue, opacity: 0.40, hueName: 'character' };
+  }
+  if (lens === 'cosmic') {
+    const o = ORIGIN[el.sym];
+    if (!o) return { hue: null, opacity: 0, hueName: 'steel' };
+    const hue = ORIGIN_HUES[o];
+    return { hue, opacity: 0.45, hueName: 'cosmic' };
   }
   return { hue: null, opacity: 0, hueName: 'amber' };
 }
@@ -1647,12 +1713,20 @@ function renderControls() {
       </div>
       <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--ink-faint);letter-spacing:0.1em;">Code on tile = top producer if ≥60%</span>
     `;
-  } else if (state.lens === 'plane') {
+  } else if (state.lens === 'cosmic') {
+    const counts = {};
+    E.forEach(el => { const k = ORIGIN[el.sym]; if (k) counts[k] = (counts[k]||0)+1; });
     c.innerHTML = `
-      <span class="control-label">Crustal abundance × Price · log–log</span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--ink-faint);letter-spacing:0.1em;">
-        Synthetic and uncommercialized elements omitted · color encodes role
-      </span>
+      <span class="control-label">Where in the universe each element was forged</span>
+      <div class="char-legend">
+        ${Object.entries(ORIGIN_LABELS).map(([k, label]) => {
+          const [r,g,b] = ORIGIN_HUES[k];
+          return `<span class="char-leg-item">
+            <span class="char-swatch" style="background: rgb(${r},${g},${b})"></span>
+            ${label} <span class="char-leg-count">· ${counts[k]||0}</span>
+          </span>`;
+        }).join('')}
+      </div>
     `;
   } else if (state.lens === 'character') {
     const counts = { v:0, d:0, b:0, n:0 };
@@ -1799,16 +1873,9 @@ function groupName(el) {
 function setLens(lens) {
   state.lens = lens;
   document.querySelectorAll('.lens').forEach(b => b.classList.toggle('active', b.dataset.lens === lens));
-  // toggle stage views
-  if (lens === 'plane') {
-    $('view-table').classList.remove('active');
-    $('view-plane').classList.add('active');
-    renderPlane();
-  } else {
-    $('view-table').classList.add('active');
-    $('view-plane').classList.remove('active');
-    applyLens();
-  }
+  $('view-table').classList.add('active');
+  $('view-plane').classList.remove('active');
+  applyLens();
   renderControls();
   // re-highlight
   if (state.selected) {
