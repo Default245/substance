@@ -641,6 +641,19 @@
     line-height: 1.8;
   }
   footer p { margin-bottom: 0.4rem; }
+  footer .footer-sig {
+    color: var(--ink-mute);
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--rule-soft);
+  }
+  footer .footer-sig a {
+    color: var(--amber);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s;
+  }
+  footer .footer-sig a:hover { border-bottom-color: var(--amber); }
   footer em {
     font-family: 'Newsreader', serif;
     font-style: italic;
@@ -699,10 +712,11 @@
 </aside>
 
 <footer>
-  <p>Prices indicative · May 2026 · USD per kilogram unless noted</p>
-  <p>Abundances: continental crust, parts per million</p>
-  <p>Supply concentration: top single-country share of global mine production · USGS / industry reports</p>
+  <p>Prices indicative · May 2026 · USD per kilogram unless noted · sourced from LME, Kitco, Fastmarkets, and Trading Economics</p>
+  <p>Abundances: continental crust averages, parts per million</p>
+  <p>Supply concentration: top single-country share of global mine production · USGS Mineral Commodity Summaries</p>
   <p>Conflict mineral flag: 3TG (Tin · Tantalum · Tungsten · Gold) plus Cobalt</p>
+  <p class="footer-sig">Hand-curated by <a href="https://github.com/Default245" target="_blank" rel="noopener">Jeremy Cooper</a>. Element classifications (toxicity, value &amp; peril, in your phone) are opinionated — corrections welcome at <a href="https://github.com/Default245/substance/issues" target="_blank" rel="noopener">github.com/Default245/substance</a>. v1.4 · May 2026.</p>
   <p><em>"Money is a kind of poetry." — Wallace Stevens</em></p>
 </footer>
 
@@ -715,7 +729,7 @@
 */
 const ELEMENTS = [
   [1,'H','Hydrogen',1,1, 1.008, 2, 1400, 0,'global',null,true,'Battery electrolyte trace; future fuel cells', false,
-   'The lightest element and the universe\'s most common atom. Burned for energy, bonded to almost everything alive.'],
+   'The first atom in the universe — made in the first three minutes after the Big Bang. Now: the proton in every acid, the H in every water molecule, and the fuel that lifts a Falcon 9 off the pad.'],
   [2,'He','Helium',1,18, 4.003, 30, 0.008, 0,'USA',55,false,null, false,
    'Cools MRI magnets and rocket engines. Non-renewable on Earth — once vented, it leaves the atmosphere for good.'],
   [3,'Li','Lithium',2,1, 6.94, 90, 20, 1,'Australia',50,true,'Battery cathode and anode chemistry', false,
@@ -729,7 +743,7 @@ const ELEMENTS = [
   [7,'N','Nitrogen',2,15, 14.01, 0.15, 19, 0,'global',null,true,'Inert atmosphere in chip fabrication', false,
    '78% of every breath. The Haber-Bosch process pulls nitrogen from air and feeds half the planet.'],
   [8,'O','Oxygen',2,16, 16.00, 0.15, 461000, 0,'global',null,true,'Display glass (SiO2); ITO touchscreen', false,
-   'Every breath, every fire, every rusted hull. Civilization runs on it.'],
+   'Every breath, every fire, every rusted hull. Plants pumped 21% of the atmosphere full of it 2 billion years ago — the great oxygenation event was the worst pollution disaster in earth history. Civilization runs on the leftovers.'],
   [9,'F','Fluorine',2,17, 19.00, 2.5, 585, 3,'China',60,true,'Battery electrolyte (LiPF6); etching gases', false,
    'Strengthens teeth and Teflon. Pure fluorine eats glass, flesh, and almost anything else.'],
   [10,'Ne','Neon',2,18, 20.18, 240, 0.000005, 0,'Ukraine',50,false,null, false,
@@ -745,7 +759,7 @@ const ELEMENTS = [
   [15,'P','Phosphorus',3,15, 30.97, 3, 1050, 2,'China',45,true,'LiFePO4 battery cathode; dopant for chips', false,
    'In your DNA and your fertilizer. White phosphorus is a weapon; matchheads are red phosphorus.'],
   [16,'S','Sulfur',3,16, 32.07, 0.10, 350, 1,'global',null,true,'Vulcanized rubber gaskets; battery additives', false,
-   'Vulcanizes rubber, makes sulfuric acid, and lurks inside every protein.'],
+   'Vulcanizes rubber, makes sulfuric acid (the most-produced industrial chemical on earth), and shows up in every cysteine bond holding your proteins together.'],
   [17,'Cl','Chlorine',3,17, 35.45, 0.20, 145, 3,'global',null,true,'PVC cable insulation', false,
    'Disinfects pools and drinking water. Deployed as a chemical weapon in Ypres, 1915.'],
   [18,'Ar','Argon',3,18, 39.95, 0.50, 3.5, 0,'global',null,false,null, false,
