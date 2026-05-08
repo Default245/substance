@@ -1105,7 +1105,7 @@ const TAG_DEFS = {
     syms: ['N','P','K','S','Ca','Mg','Mo','B'] },
   semi: { syn: ['semiconductor','chip','cpu','processor','transistor','microchip'],
     syms: ['Si','Ge','Ga','As','In','P','Sb','B','Hf'] },
-  reactswater: { syn: ['explodes in water','reacts with water','explode','explodes','exploding','explosive','reacts'],
+  reactswater: { syn: ['water','water soluble','soluble','soluble in water','dissolves','dissolves in water','explodes in water','reacts with water','reacts','explode','explodes','exploding','explosive'],
     syms: ['Li','Na','K','Rb','Cs','Fr','Ca','Sr','Ba'] },
   precious: { syn: ['precious metal','precious','expensive'],
     syms: ['Au','Ag','Pt','Pd','Rh','Ir','Os','Ru','Re'] },
@@ -1129,6 +1129,12 @@ const TAG_DEFS = {
     syms: ['Si','Cu','Au','Ag','Ta','Sn','Al','Li','Co','Ni','Ga','As','In','Hf','W','Pt','Pd','Nd','Dy','Mg'] },
   lamp: { syn: ['lightbulb','light bulb','bulb','lamp','incandescent','fluorescent','cfl','street light','streetlight'],
     syms: ['W','Hg','Na','Ar','Kr','Xe','Ne','Y','Eu','Ce','Ga','In','P'] },
+  rocket: { syn: ['rocket','rockets','rocketry','spacecraft','space','launch','propellant','spaceship','satellite'],
+    syms: ['H','O','Al','Li','Be','C','N','Ti','Cu','W','He'] },
+  solar: { syn: ['solar','solar panel','solar cell','photovoltaic','pv'],
+    syms: ['Si','Cu','Ag','Cd','Te','Ga','In','Se','Ge','Sn'] },
+  nuclear: { syn: ['nuclear','reactor','fission','fuel rod','reactor fuel','atomic'],
+    syms: ['U','Th','Pu','Hf','Zr','B','Cd','Gd','Be','Li'] },
   mirror: { syn: ['mirror','reflective','silvering'],
     syms: ['Ag','Al','Cu','Cr','Sn'] },
   watch: { syn: ['watch','wristwatch','atomic clock','clock','timepiece'],
@@ -1237,13 +1243,6 @@ function searchResults(q) {
   // 5. Name prefix / substring
   m = E.filter(e => e.name.toLowerCase().startsWith(q));
   if (!m.length) m = E.filter(e => e.name.toLowerCase().includes(q));
-  if (m.length) return new Set(m.map(e => e.z));
-
-  // 6. Full-text in note + phoneRole
-  m = E.filter(e =>
-    (e.note || '').toLowerCase().includes(q) ||
-    (e.phoneRole || '').toLowerCase().includes(q)
-  );
   return new Set(m.map(e => e.z));
 }
 
