@@ -213,6 +213,13 @@
     white-space: nowrap;
     min-width: 4rem;
   }
+  /* Compound readout shows a chemical formula; element symbols are
+     case-significant (NaCl, not NACL), so don't uppercase it. */
+  .search-count.compound {
+    text-transform: none;
+    letter-spacing: 0.06em;
+    color: var(--amber);
+  }
   .lens-search-wrap.has-query {
     border-color: var(--amber);
   }
@@ -690,7 +697,7 @@
   <button class="lens" data-lens="supply" style="--lens-color: var(--rust)"><span class="num">04</span>Supply Concentration</button>
   <button class="lens" data-lens="character" style="--lens-color: var(--plum)"><span class="num">05</span>Value &amp; Peril</button>
   <div class="lens-search-wrap" id="searchWrap">
-    <input class="lens-search" id="search" type="text" placeholder="Search · try edible, magnetic, in your phone" autocomplete="off" spellcheck="false">
+    <input class="lens-search" id="search" type="text" placeholder="Search · gold, Au, 79, cocaine, table salt" autocomplete="off" spellcheck="false">
     <span class="search-count" id="searchCount"></span>
   </div>
 </nav>
@@ -1121,6 +1128,72 @@ const TAG_DEFS = {
     syms: ['P','S','K','Sb','Ce','Fe'] }
 };
 
+/* ============ COMPOUNDS ============ */
+/* "What is it made of?" — a substance query highlights its constituent
+   elements and shows the formula. Matched by EXACT full query only (no
+   substring), which avoids the note-search false-positive bug class.
+   Organics collapse toward C/H/N/O; minerals and alloys spread across
+   the table, which is where this view is actually legible. */
+const COMPOUND_DEFS = [
+  { name:'Cocaine',           aka:['cocaine','coke','crack','benzoylmethylecgonine'], formula:'C₁₇H₂₁NO₄', syms:['C','H','N','O'] },
+  { name:'Caffeine',          aka:['caffeine'],                          formula:'C₈H₁₀N₄O₂',   syms:['C','H','N','O'] },
+  { name:'Nicotine',          aka:['nicotine'],                          formula:'C₁₀H₁₄N₂',    syms:['C','H','N'] },
+  { name:'Ethanol',           aka:['ethanol','alcohol','booze','drinking alcohol'], formula:'C₂H₆O', syms:['C','H','O'] },
+  { name:'THC',               aka:['thc','tetrahydrocannabinol','weed','cannabis','marijuana'], formula:'C₂₁H₃₀O₂', syms:['C','H','O'] },
+  { name:'MDMA',              aka:['mdma','ecstasy','molly'],            formula:'C₁₁H₁₅NO₂',   syms:['C','H','N','O'] },
+  { name:'LSD',               aka:['lsd','lysergic acid diethylamide'],  formula:'C₂₀H₂₅N₃O',   syms:['C','H','N','O'] },
+  { name:'Psilocybin',        aka:['psilocybin','shrooms','magic mushrooms'], formula:'C₁₂H₁₇N₂O₄P', syms:['C','H','N','O','P'] },
+  { name:'Methamphetamine',   aka:['methamphetamine','meth','crystal meth'], formula:'C₁₀H₁₅N', syms:['C','H','N'] },
+  { name:'Heroin',            aka:['heroin','diamorphine','diacetylmorphine'], formula:'C₂₁H₂₃NO₅', syms:['C','H','N','O'] },
+  { name:'Morphine',          aka:['morphine'],                          formula:'C₁₇H₁₉NO₃',   syms:['C','H','N','O'] },
+  { name:'Fentanyl',          aka:['fentanyl'],                          formula:'C₂₂H₂₈N₂O',   syms:['C','H','N','O'] },
+  { name:'Aspirin',           aka:['aspirin','acetylsalicylic acid'],    formula:'C₉H₈O₄',      syms:['C','H','O'] },
+  { name:'Glucose',           aka:['glucose','sugar','dextrose','blood sugar'], formula:'C₆H₁₂O₆', syms:['C','H','O'] },
+  { name:'Water',             aka:['water','h2o'],                       formula:'H₂O',         syms:['H','O'] },
+  { name:'Table salt',        aka:['table salt','salt','sodium chloride','nacl'], formula:'NaCl', syms:['Na','Cl'] },
+  { name:'Carbon dioxide',    aka:['carbon dioxide','co2'],              formula:'CO₂',         syms:['C','O'] },
+  { name:'Ammonia',           aka:['ammonia'],                           formula:'NH₃',         syms:['N','H'] },
+  { name:'Methane',           aka:['methane','natural gas'],             formula:'CH₄',         syms:['C','H'] },
+  { name:'Rust',              aka:['rust','iron oxide','iron(iii) oxide'], formula:'Fe₂O₃',     syms:['Fe','O'] },
+  { name:'Quartz',            aka:['quartz','silica','sand','silicon dioxide'], formula:'SiO₂', syms:['Si','O'] },
+  { name:'Pyrite',            aka:['pyrite',"fool's gold",'fools gold','iron pyrite'], formula:'FeS₂', syms:['Fe','S'] },
+  { name:'Limestone',         aka:['limestone','chalk','calcium carbonate','calcite','marble'], formula:'CaCO₃', syms:['Ca','C','O'] },
+  { name:'Baking soda',       aka:['baking soda','sodium bicarbonate','bicarb'], formula:'NaHCO₃', syms:['Na','H','C','O'] },
+  { name:'Bleach',            aka:['bleach','sodium hypochlorite'],      formula:'NaClO',       syms:['Na','Cl','O'] },
+  { name:'Sulfuric acid',     aka:['sulfuric acid','sulphuric acid','battery acid'], formula:'H₂SO₄', syms:['H','S','O'] },
+  { name:'Hydrogen peroxide', aka:['hydrogen peroxide','peroxide'],      formula:'H₂O₂',        syms:['H','O'] },
+  { name:'Steel',             aka:['steel'],                             formula:'Fe + C',      syms:['Fe','C'] },
+  { name:'Stainless steel',   aka:['stainless steel','stainless'],       formula:'Fe·Cr·Ni',    syms:['Fe','Cr','Ni'] },
+  { name:'Brass',             aka:['brass'],                             formula:'Cu + Zn',     syms:['Cu','Zn'] },
+  { name:'Bronze',            aka:['bronze'],                            formula:'Cu + Sn',     syms:['Cu','Sn'] },
+  { name:'Solder',            aka:['solder'],                            formula:'Sn + Pb',     syms:['Sn','Pb'] }
+];
+
+/* aka string (lowercased) → compound object. Guards against a silent
+   overwrite if two compounds ever claim the same alias. */
+const COMPOUND_INDEX = {};
+for (const c of COMPOUND_DEFS) {
+  for (const a of c.aka) {
+    const key = a.toLowerCase();
+    if (COMPOUND_INDEX[key]) console.warn('Duplicate compound alias:', key);
+    COMPOUND_INDEX[key] = c;
+  }
+}
+
+/* Resolve a list of element symbols to a Set of atomic numbers. */
+function symsToZ(syms) {
+  const out = new Set();
+  for (const sym of syms) {
+    const el = E.find(e => e.sym === sym);
+    if (el) out.add(el.z);
+  }
+  return out;
+}
+
+/* Set by searchResults() when the query resolves to a compound, read by
+   applySearch() for the formula readout. Reset on every search. */
+let _lastCompound = null;
+
 function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
 /* Precomputed flat list of (tag, syn, regex), sorted longest-first.
@@ -1142,6 +1215,7 @@ function buildSynList() {
 
 /* Returns Set of atomic numbers matching the query */
 function searchResults(q) {
+  _lastCompound = null;
   q = (q || '').trim().toLowerCase();
   if (!q) return null;  // null = no filter
 
@@ -1160,6 +1234,14 @@ function searchResults(q) {
   // 3. Exact name match
   let m = E.filter(e => e.name.toLowerCase() === q);
   if (m.length) return new Set(m.map(e => e.z));
+
+  // 3b. Compound / substance — EXACT full-query match only. No substring,
+  //     so "salt" never leaks into "asphalt"-style partial hits.
+  const cmp = COMPOUND_INDEX[q];
+  if (cmp) {
+    _lastCompound = cmp;
+    return symsToZ(cmp.syms);
+  }
 
   // 4. Tag/category match — greedy longest-first to prevent
   //    "noble gases" from also firing the bare "gas" tag.
@@ -1203,8 +1285,11 @@ function applySearch() {
   // Update results badge
   const count = $('searchCount');
   if (count) {
+    count.classList.toggle('compound', !!_lastCompound);
     if (results === null) {
       count.textContent = '';
+    } else if (_lastCompound) {
+      count.textContent = _lastCompound.name + ' · ' + _lastCompound.formula;
     } else if (results.size === 0) {
       count.textContent = 'no matches';
     } else {
