@@ -560,6 +560,93 @@
   }
   .detail-meta span { color: var(--detail-color, var(--amber)); }
 
+  /* ============ COMPOUND CARD ============ */
+  .compound-card {
+    max-width: 1200px;
+    margin: 1.5rem auto 0;
+    padding: 1.5rem;
+    border-top: 1px solid var(--rule);
+    position: relative;
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 1.75rem;
+    align-items: center;
+  }
+  .compound-card[hidden] { display: none; }
+  .compound-card::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 1.5rem;
+    width: 40px; height: 1px;
+    background: var(--amber);
+  }
+  .cc-struct {
+    position: relative;
+    width: 160px; height: 160px;
+    background: var(--bg-tile);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .cc-struct canvas { border-radius: 3px; }
+  .cc-hint {
+    position: absolute; bottom: 5px; left: 0; right: 0;
+    text-align: center; pointer-events: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.48rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-faint); opacity: 0.65;
+  }
+  .cc-struct.cc-none canvas, .cc-struct.cc-failed canvas { opacity: 0; }
+  .cc-struct.cc-none .cc-hint, .cc-struct.cc-failed .cc-hint { display: none; }
+  .cc-struct.cc-none::after, .cc-struct.cc-failed::after {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-mute); text-align: center; padding: 0 0.5rem;
+  }
+  .cc-struct.cc-none::after  { content: 'alloy · mixture'; }
+  .cc-struct.cc-failed::after { content: 'no 3D model'; }
+  .cc-body { min-width: 0; }
+  .cc-kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--amber);
+    margin-bottom: 0.35rem;
+  }
+  .cc-name {
+    font-family: 'Newsreader', serif;
+    font-weight: 300; font-style: italic;
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    line-height: 1.05; margin-bottom: 0.2rem;
+    font-variation-settings: "opsz" 60;
+  }
+  .cc-formula {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem; letter-spacing: 0.04em;
+    color: var(--ink); margin-bottom: 1.1rem;
+  }
+  .cc-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-faint);
+    margin-bottom: 0.5rem;
+  }
+  .cc-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .cc-chip {
+    display: inline-flex; flex-direction: column; align-items: center;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--rule); border-radius: 3px;
+    background: var(--bg-tile); cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .cc-chip:hover { border-color: var(--amber); background: rgba(212,160,76,0.08); }
+  .cc-chip b { font-size: 0.95rem; font-weight: 500; color: var(--ink); line-height: 1; }
+  .cc-chip small { font-size: 0.5rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin-top: 3px; }
+  @media (max-width: 700px) {
+    .compound-card { grid-template-columns: 1fr; gap: 1rem; justify-items: start; }
+  }
+
   .stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -713,6 +800,8 @@
     <div class="mobile-grid" id="mobileGrid"></div>
   </div>
 </main>
+
+<div class="compound-card" id="compoundCard" hidden></div>
 
 <aside class="detail" id="detail">
   <div class="detail-empty">Select an element to read its dossier.</div>
@@ -1133,35 +1222,38 @@ const TAG_DEFS = {
    elements and shows the formula. Matched by EXACT full query only (no
    substring), which avoids the note-search false-positive bug class.
    Organics collapse toward C/H/N/O; minerals and alloys spread across
-   the table, which is where this view is actually legible. */
+   the table, which is where this view is actually legible.
+   `pubchem` is the canonical name fed to the PubChem PUG-REST image API
+   for the 2D structure; omitted for alloys/mixtures with no single
+   molecule (they render the element spread only). */
 const COMPOUND_DEFS = [
-  { name:'Cocaine',           aka:['cocaine','coke','crack','benzoylmethylecgonine'], formula:'C₁₇H₂₁NO₄', syms:['C','H','N','O'] },
-  { name:'Caffeine',          aka:['caffeine'],                          formula:'C₈H₁₀N₄O₂',   syms:['C','H','N','O'] },
-  { name:'Nicotine',          aka:['nicotine'],                          formula:'C₁₀H₁₄N₂',    syms:['C','H','N'] },
-  { name:'Ethanol',           aka:['ethanol','alcohol','booze','drinking alcohol'], formula:'C₂H₆O', syms:['C','H','O'] },
-  { name:'THC',               aka:['thc','tetrahydrocannabinol','weed','cannabis','marijuana'], formula:'C₂₁H₃₀O₂', syms:['C','H','O'] },
-  { name:'MDMA',              aka:['mdma','ecstasy','molly'],            formula:'C₁₁H₁₅NO₂',   syms:['C','H','N','O'] },
-  { name:'LSD',               aka:['lsd','lysergic acid diethylamide'],  formula:'C₂₀H₂₅N₃O',   syms:['C','H','N','O'] },
-  { name:'Psilocybin',        aka:['psilocybin','shrooms','magic mushrooms'], formula:'C₁₂H₁₇N₂O₄P', syms:['C','H','N','O','P'] },
-  { name:'Methamphetamine',   aka:['methamphetamine','meth','crystal meth'], formula:'C₁₀H₁₅N', syms:['C','H','N'] },
-  { name:'Heroin',            aka:['heroin','diamorphine','diacetylmorphine'], formula:'C₂₁H₂₃NO₅', syms:['C','H','N','O'] },
-  { name:'Morphine',          aka:['morphine'],                          formula:'C₁₇H₁₉NO₃',   syms:['C','H','N','O'] },
-  { name:'Fentanyl',          aka:['fentanyl'],                          formula:'C₂₂H₂₈N₂O',   syms:['C','H','N','O'] },
-  { name:'Aspirin',           aka:['aspirin','acetylsalicylic acid'],    formula:'C₉H₈O₄',      syms:['C','H','O'] },
-  { name:'Glucose',           aka:['glucose','sugar','dextrose','blood sugar'], formula:'C₆H₁₂O₆', syms:['C','H','O'] },
-  { name:'Water',             aka:['water','h2o'],                       formula:'H₂O',         syms:['H','O'] },
-  { name:'Table salt',        aka:['table salt','salt','sodium chloride','nacl'], formula:'NaCl', syms:['Na','Cl'] },
-  { name:'Carbon dioxide',    aka:['carbon dioxide','co2'],              formula:'CO₂',         syms:['C','O'] },
-  { name:'Ammonia',           aka:['ammonia'],                           formula:'NH₃',         syms:['N','H'] },
-  { name:'Methane',           aka:['methane','natural gas'],             formula:'CH₄',         syms:['C','H'] },
-  { name:'Rust',              aka:['rust','iron oxide','iron(iii) oxide'], formula:'Fe₂O₃',     syms:['Fe','O'] },
-  { name:'Quartz',            aka:['quartz','silica','sand','silicon dioxide'], formula:'SiO₂', syms:['Si','O'] },
-  { name:'Pyrite',            aka:['pyrite',"fool's gold",'fools gold','iron pyrite'], formula:'FeS₂', syms:['Fe','S'] },
-  { name:'Limestone',         aka:['limestone','chalk','calcium carbonate','calcite','marble'], formula:'CaCO₃', syms:['Ca','C','O'] },
-  { name:'Baking soda',       aka:['baking soda','sodium bicarbonate','bicarb'], formula:'NaHCO₃', syms:['Na','H','C','O'] },
-  { name:'Bleach',            aka:['bleach','sodium hypochlorite'],      formula:'NaClO',       syms:['Na','Cl','O'] },
-  { name:'Sulfuric acid',     aka:['sulfuric acid','sulphuric acid','battery acid'], formula:'H₂SO₄', syms:['H','S','O'] },
-  { name:'Hydrogen peroxide', aka:['hydrogen peroxide','peroxide'],      formula:'H₂O₂',        syms:['H','O'] },
+  { name:'Cocaine',           aka:['cocaine','coke','crack','benzoylmethylecgonine'], formula:'C₁₇H₂₁NO₄', syms:['C','H','N','O'], pubchem:'cocaine' },
+  { name:'Caffeine',          aka:['caffeine'],                          formula:'C₈H₁₀N₄O₂',   syms:['C','H','N','O'], pubchem:'caffeine' },
+  { name:'Nicotine',          aka:['nicotine'],                          formula:'C₁₀H₁₄N₂',    syms:['C','H','N'], pubchem:'nicotine' },
+  { name:'Ethanol',           aka:['ethanol','alcohol','booze','drinking alcohol'], formula:'C₂H₆O', syms:['C','H','O'], pubchem:'ethanol' },
+  { name:'THC',               aka:['thc','tetrahydrocannabinol','weed','cannabis','marijuana'], formula:'C₂₁H₃₀O₂', syms:['C','H','O'], pubchem:'tetrahydrocannabinol' },
+  { name:'MDMA',              aka:['mdma','ecstasy','molly'],            formula:'C₁₁H₁₅NO₂',   syms:['C','H','N','O'], pubchem:'MDMA' },
+  { name:'LSD',               aka:['lsd','lysergic acid diethylamide'],  formula:'C₂₀H₂₅N₃O',   syms:['C','H','N','O'], pubchem:'lysergic acid diethylamide' },
+  { name:'Psilocybin',        aka:['psilocybin','shrooms','magic mushrooms'], formula:'C₁₂H₁₇N₂O₄P', syms:['C','H','N','O','P'], pubchem:'psilocybin' },
+  { name:'Methamphetamine',   aka:['methamphetamine','meth','crystal meth'], formula:'C₁₀H₁₅N', syms:['C','H','N'], pubchem:'methamphetamine' },
+  { name:'Heroin',            aka:['heroin','diamorphine','diacetylmorphine'], formula:'C₂₁H₂₃NO₅', syms:['C','H','N','O'], pubchem:'heroin' },
+  { name:'Morphine',          aka:['morphine'],                          formula:'C₁₇H₁₉NO₃',   syms:['C','H','N','O'], pubchem:'morphine' },
+  { name:'Fentanyl',          aka:['fentanyl'],                          formula:'C₂₂H₂₈N₂O',   syms:['C','H','N','O'], pubchem:'fentanyl' },
+  { name:'Aspirin',           aka:['aspirin','acetylsalicylic acid'],    formula:'C₉H₈O₄',      syms:['C','H','O'], pubchem:'aspirin' },
+  { name:'Glucose',           aka:['glucose','sugar','dextrose','blood sugar'], formula:'C₆H₁₂O₆', syms:['C','H','O'], pubchem:'glucose' },
+  { name:'Water',             aka:['water','h2o'],                       formula:'H₂O',         syms:['H','O'], pubchem:'water' },
+  { name:'Table salt',        aka:['table salt','salt','sodium chloride','nacl'], formula:'NaCl', syms:['Na','Cl'], pubchem:'sodium chloride' },
+  { name:'Carbon dioxide',    aka:['carbon dioxide','co2'],              formula:'CO₂',         syms:['C','O'], pubchem:'carbon dioxide' },
+  { name:'Ammonia',           aka:['ammonia'],                           formula:'NH₃',         syms:['N','H'], pubchem:'ammonia' },
+  { name:'Methane',           aka:['methane','natural gas'],             formula:'CH₄',         syms:['C','H'], pubchem:'methane' },
+  { name:'Rust',              aka:['rust','iron oxide','iron(iii) oxide'], formula:'Fe₂O₃',     syms:['Fe','O'], pubchem:'iron(III) oxide' },
+  { name:'Quartz',            aka:['quartz','silica','sand','silicon dioxide'], formula:'SiO₂', syms:['Si','O'], pubchem:'silicon dioxide' },
+  { name:'Pyrite',            aka:['pyrite',"fool's gold",'fools gold','iron pyrite'], formula:'FeS₂', syms:['Fe','S'], pubchem:'iron disulfide' },
+  { name:'Limestone',         aka:['limestone','chalk','calcium carbonate','calcite','marble'], formula:'CaCO₃', syms:['Ca','C','O'], pubchem:'calcium carbonate' },
+  { name:'Baking soda',       aka:['baking soda','sodium bicarbonate','bicarb'], formula:'NaHCO₃', syms:['Na','H','C','O'], pubchem:'sodium bicarbonate' },
+  { name:'Bleach',            aka:['bleach','sodium hypochlorite'],      formula:'NaClO',       syms:['Na','Cl','O'], pubchem:'sodium hypochlorite' },
+  { name:'Sulfuric acid',     aka:['sulfuric acid','sulphuric acid','battery acid'], formula:'H₂SO₄', syms:['H','S','O'], pubchem:'sulfuric acid' },
+  { name:'Hydrogen peroxide', aka:['hydrogen peroxide','peroxide'],      formula:'H₂O₂',        syms:['H','O'], pubchem:'hydrogen peroxide' },
   { name:'Steel',             aka:['steel'],                             formula:'Fe + C',      syms:['Fe','C'] },
   { name:'Stainless steel',   aka:['stainless steel','stainless'],       formula:'Fe·Cr·Ni',    syms:['Fe','Cr','Ni'] },
   { name:'Brass',             aka:['brass'],                             formula:'Cu + Zn',     syms:['Cu','Zn'] },
@@ -1193,6 +1285,137 @@ function symsToZ(syms) {
 /* Set by searchResults() when the query resolves to a compound, read by
    applySearch() for the formula readout. Reset on every search. */
 let _lastCompound = null;
+
+/* CPK / Jmol element colors — the SAME scheme 3Dmol renders atoms with by
+   default — so the "comprised of" chips act as a legend for the 3D model.
+   Covers every element used in COMPOUND_DEFS. If the viewer's colorscheme
+   ever changes, update this to match. */
+const ELEMENT_COLOR = {
+  H:'#ffffff', C:'#909090', N:'#3050f8', O:'#ff0d0d', P:'#ff8000', S:'#ffff30',
+  Na:'#ab5cf2', Cl:'#1ff01f', Si:'#f0c8a0', Ca:'#3dff00', Cr:'#8a99c7',
+  Fe:'#e06633', Ni:'#50d050', Cu:'#c88033', Zn:'#7d80b0', Sn:'#668080', Pb:'#575961'
+};
+
+/* Lazy-load 3Dmol.js once. 3Dmol.org's own docs warn their build URL tracks
+   the dev branch and changes; cdnjs/jsdelivr serve pinned snapshots. We try
+   pinned mirrors first and only fall back to 3Dmol.org as a last resort,
+   logging which mirror failed so the console says why if all three break. */
+const MOL3D_URLS = [
+  'https://cdn.jsdelivr.net/npm/3dmol@2.5.2/build/3Dmol-min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.0.1/3Dmol-min.js',
+  'https://3Dmol.org/build/3Dmol-min.js'
+];
+let _mol3dPromise = null;
+function load3Dmol() {
+  if (window.$3Dmol) return Promise.resolve(window.$3Dmol);
+  if (_mol3dPromise) return _mol3dPromise;
+  _mol3dPromise = new Promise((resolve, reject) => {
+    let i = 0;
+    const tryNext = () => {
+      if (i >= MOL3D_URLS.length) { reject(new Error('all 3Dmol mirrors failed')); return; }
+      const url = MOL3D_URLS[i++];
+      const s = document.createElement('script');
+      s.src = url; s.async = true;
+      s.onload = () => {
+        if (window.$3Dmol) resolve(window.$3Dmol);
+        else { console.warn('[substance] 3Dmol loaded but $3Dmol missing:', url); tryNext(); }
+      };
+      s.onerror = () => { console.warn('[substance] 3Dmol mirror failed:', url); tryNext(); };
+      document.head.appendChild(s);
+    };
+    tryNext();
+  });
+  _mol3dPromise.catch(e => console.warn('[substance]', e.message));
+  return _mol3dPromise;
+}
+
+/* One reused GLViewer — repeated searches must not spawn a new WebGL context
+   each time (browsers cap live contexts at ~16). _viewerToken discards the
+   results of any async load that a newer search has superseded. */
+let _viewer = null;
+let _viewerToken = 0;
+
+function show3DStructure(compound) {
+  const host = $('ccStruct');
+  if (!host) return;
+  const token = ++_viewerToken;
+  host.classList.remove('cc-failed', 'cc-none');
+
+  load3Dmol().then($3Dmol => {
+    if (token !== _viewerToken) return;
+    if (!_viewer) _viewer = $3Dmol.createViewer(host, { backgroundColor: 0x1a1714 });
+    const url = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/' +
+      encodeURIComponent(compound.pubchem) + '/SDF?record_type=3d';
+    return fetch(url).then(r => {
+      if (!r.ok) throw new Error('no 3D conformer');
+      return r.text();
+    }).then(sdf => {
+      if (token !== _viewerToken) return;
+      _viewer.clear();
+      _viewer.addModel(sdf, 'sdf');
+      _viewer.setStyle({}, { stick: { radius: 0.13 }, sphere: { scale: 0.30 } });
+      _viewer.zoomTo();
+      _viewer.render();
+      _viewer.spin('y', 0.6);
+    });
+  }).catch(err => {
+    console.warn('[substance] 3D failed for', compound.name + ':', err && err.message);
+    if (token !== _viewerToken) return;
+    if (_viewer) { try { _viewer.clear(); _viewer.render(); } catch (e) {} }
+    host.classList.add('cc-failed');
+  });
+}
+
+/* Show the compound card: interactive 3D structure (lazy, from PubChem, fails
+   silently to a label), formula, and clickable constituent elements. The
+   skeleton is built once so the WebGL viewer survives re-renders. */
+function renderCompoundCard() {
+  const card = $('compoundCard');
+  if (!card) return;
+  const c = _lastCompound;
+  if (!c) { card.hidden = true; return; }
+
+  if (!$('ccBody')) {
+    card.innerHTML =
+      '<div class="cc-struct" id="ccStruct"><span class="cc-hint">drag to rotate</span></div>' +
+      '<div class="cc-body" id="ccBody"></div>';
+  }
+  card.hidden = false;
+
+  const chips = c.syms.map(sym => {
+    const el = E.find(e => e.sym === sym);
+    if (!el) return '';
+    const col = ELEMENT_COLOR[sym] || 'var(--ink)';
+    return `<span class="cc-chip" data-z="${el.z}"><b style="color:${col}">${sym}</b><small>${el.name}</small></span>`;
+  }).join('');
+
+  $('ccBody').innerHTML = `
+    <div class="cc-kicker">Substance</div>
+    <div class="cc-name">${c.name}</div>
+    <div class="cc-formula">${c.formula}</div>
+    <div class="cc-label">Comprised of</div>
+    <div class="cc-chips">${chips}</div>`;
+
+  // Clicking a constituent element selects it in the dossier below.
+  $('ccBody').querySelectorAll('.cc-chip').forEach(ch => {
+    ch.addEventListener('click', () => {
+      state._userInitiated = true;
+      selectElement(+ch.dataset.z);
+      state._userInitiated = false;
+    });
+  });
+
+  // 3D for real molecules; alloys/mixtures have none, so park the viewer.
+  const host = $('ccStruct');
+  if (c.pubchem) {
+    show3DStructure(c);
+  } else {
+    _viewerToken++;
+    if (_viewer) { try { _viewer.clear(); _viewer.render(); } catch (e) {} }
+    host.classList.remove('cc-failed');
+    host.classList.add('cc-none');
+  }
+}
 
 function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
@@ -1296,6 +1519,8 @@ function applySearch() {
       count.textContent = results.size + ' match' + (results.size === 1 ? '' : 'es');
     }
   }
+
+  renderCompoundCard();
 }
 
 /* ============ COLOR SCALES ============ */
