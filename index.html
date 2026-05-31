@@ -224,6 +224,13 @@
     border-color: var(--amber);
   }
   .cell.search-hide { opacity: 0.08; }
+  /* When a search has any hits, cells outside the matched rows/columns
+     are removed from layout entirely so the table collapses around the
+     hits — kills the 95%-empty-fade look on narrow matches like a single
+     compound. The grid-template-rows/columns on .periodic get rewritten
+     in JS to zero out the empty tracks. */
+  .cell.row-collapsed { display: none; }
+  .lanth-actinides.row-collapsed { display: none; }
   @media (max-width: 700px) {
     .lens-search-wrap { width: auto; margin-left: 1rem; margin-right: 1rem; margin-top: 0.5rem; }
     .lens-search { width: 100%; }
@@ -1501,9 +1508,54 @@ function applySearch() {
   const results = searchResults(q);
   const inSet = z => results === null ? true : results.has(z);
 
+  // When a search has any hits, collapse empty rows/columns so the table
+  // condenses around the matches instead of leaving 90%+ faded dead space.
+  // visibleRows/visibleCols stay null when no search is active OR when the
+  // query returns zero hits (the table fades but stays full-sized, which
+  // reads as "no matches" rather than as a collapsed blank slate).
+  let visibleRows = null, visibleCols = null;
+  if (results !== null && results.size > 0) {
+    visibleRows = new Set();
+    visibleCols = new Set();
+    results.forEach(z => {
+      const el = E.find(e => e.z === z);
+      if (el) { visibleRows.add(el.row); visibleCols.add(el.col); }
+    });
+  }
+
+  const periodic = document.querySelector('.periodic');
+  if (periodic) {
+    if (visibleRows) {
+      const rowTpl = [];
+      for (let r = 1; r <= 7; r++) rowTpl.push(visibleRows.has(r) ? 'auto' : '0');
+      const colTpl = [];
+      for (let c = 1; c <= 18; c++) colTpl.push(visibleCols.has(c) ? 'minmax(40px, 1fr)' : '0');
+      periodic.style.gridTemplateRows = rowTpl.join(' ');
+      periodic.style.gridTemplateColumns = colTpl.join(' ');
+    } else {
+      periodic.style.gridTemplateRows = '';
+      periodic.style.gridTemplateColumns = '';
+    }
+  }
+
   document.querySelectorAll('.cell:not(.ln-marker)').forEach(cell => {
-    cell.classList.toggle('search-hide', !inSet(+cell.dataset.z));
+    const z = +cell.dataset.z;
+    cell.classList.toggle('search-hide', !inSet(z));
+    if (visibleRows) {
+      const el = E.find(e => e.z === z);
+      cell.classList.toggle('row-collapsed', !el || !visibleRows.has(el.row));
+    } else {
+      cell.classList.remove('row-collapsed');
+    }
   });
+
+  // Lanthanide/actinide strip (rows 9-10) sits in its own grid below the
+  // main table; hide the whole strip when no L/A elements matched.
+  const la = $('lanthActinides');
+  if (la) {
+    const hasLA = visibleRows && (visibleRows.has(9) || visibleRows.has(10));
+    la.classList.toggle('row-collapsed', !!visibleRows && !hasLA);
+  }
 
   // Update results badge
   const count = $('searchCount');
